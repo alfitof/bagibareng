@@ -1,65 +1,170 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { Steps, Typography, Layout, Space } from "antd";
+import {
+  CameraOutlined,
+  EditOutlined,
+  TeamOutlined,
+  SwapOutlined,
+  TrophyOutlined,
+} from "@ant-design/icons";
+
+import UploadStep from "../components/UploadStep";
+import EditItemsStep from "../components/EditItemsStep";
+import PeopleStep from "../components/PeopleStep";
+import AssignStep from "../components/AssignStep";
+import ResultStep from "../components/ResultStep";
+
+import { BillState } from "@/lib/types";
+
+const { Title, Text } = Typography;
+const { Content } = Layout;
+
+const INITIAL_STATE: BillState = {
+  step: 0,
+  imageFile: null,
+  imagePreviewUrl: null,
+  ocrRawText: "",
+  items: [],
+  people: [],
+  assignments: {},
+};
+
+const STEPS = [
+  { title: "Upload", icon: <CameraOutlined /> },
+  { title: "Edit Item", icon: <EditOutlined /> },
+  { title: "Orang", icon: <TeamOutlined /> },
+  { title: "Assign", icon: <SwapOutlined /> },
+  { title: "Hasil", icon: <TrophyOutlined /> },
+];
+
+const getSteps = (current: number) => [
+  {
+    title: "Upload",
+    icon: (
+      <CameraOutlined
+        style={{
+          fontSize: 14,
+          color: current === 0 ? "#fff" : "#bfbfbf",
+        }}
+      />
+    ),
+  },
+  {
+    title: "Edit Item",
+    icon: (
+      <EditOutlined
+        style={{
+          fontSize: 14,
+          color: current === 1 ? "#fff" : "#bfbfbf",
+        }}
+      />
+    ),
+  },
+  {
+    title: "Orang",
+    icon: (
+      <TeamOutlined
+        style={{
+          fontSize: 14,
+          color: current === 2 ? "#fff" : "#bfbfbf",
+        }}
+      />
+    ),
+  },
+  {
+    title: "Assign",
+    icon: (
+      <SwapOutlined
+        style={{
+          fontSize: 14,
+          color: current === 3 ? "#fff" : "#bfbfbf",
+        }}
+      />
+    ),
+  },
+  {
+    title: "Hasil",
+    icon: (
+      <TrophyOutlined
+        style={{
+          fontSize: 14,
+          color: current === 4 ? "#fff" : "#bfbfbf",
+        }}
+      />
+    ),
+  },
+];
+
+export default function HomePage() {
+  const [bill, setBill] = useState<BillState>(INITIAL_STATE);
+
+  const goStep = (step: number) => setBill((prev) => ({ ...prev, step }));
+
+  const updateBill = (patch: Partial<BillState>) =>
+    setBill((prev) => ({ ...prev, ...patch }));
+
+  const resetAll = () => setBill(INITIAL_STATE);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <Layout style={{ minHeight: "100vh", background: "#f7f8fa" }}>
+      <Content
+        style={{ maxWidth: 760, margin: "0 auto", padding: "32px 16px" }}
+      >
+        {/* Header */}
+        <Space orientation="vertical" size={4} style={{ marginBottom: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 32 }}>🧾</span>
+            <Title
+              level={2}
+              style={{
+                margin: 0,
+                fontFamily: "Plus Jakarta Sans",
+                fontWeight: 800,
+                letterSpacing: "-0.5px",
+                color: "#1a1a2e",
+              }}
+            >
+              Split<span style={{ color: "#f5a623" }}>Bill</span>
+            </Title>
+          </div>
+          <Text style={{ color: "#8c8c8c", fontSize: 13 }}>
+            Upload foto struk → scan otomatis → bagi tagihan per orang
+          </Text>
+        </Space>
+
+        {/* Steps */}
+        <Steps
+          current={bill.step}
+          items={getSteps(bill.step)}
+          size="small"
+          style={{ marginBottom: 32 }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Step Content */}
+        <div className="step-card-enter" key={bill.step}>
+          {bill.step === 0 && (
+            <UploadStep bill={bill} updateBill={updateBill} goStep={goStep} />
+          )}
+          {bill.step === 1 && (
+            <EditItemsStep
+              bill={bill}
+              updateBill={updateBill}
+              goStep={goStep}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          )}
+          {bill.step === 2 && (
+            <PeopleStep bill={bill} updateBill={updateBill} goStep={goStep} />
+          )}
+          {bill.step === 3 && (
+            <AssignStep bill={bill} updateBill={updateBill} goStep={goStep} />
+          )}
+          {bill.step === 4 && (
+            <ResultStep bill={bill} goStep={goStep} resetAll={resetAll} />
+          )}
         </div>
-      </main>
-    </div>
+      </Content>
+    </Layout>
   );
 }

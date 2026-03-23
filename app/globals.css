@@ -1,26 +1,191 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
 @import "tailwindcss";
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --primary: #f5a623;
+  --primary-light: #fff7e6;
+  --bg: #f7f8fa;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --muted: #8c8c8c;
+  --border: #e8e8e8;
+  --radius: 16px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    "Plus Jakarta Sans",
+    -apple-system,
+    sans-serif !important;
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  min-height: 100vh;
+}
+
+/* Ant Design overrides */
+.ant-btn-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.ant-btn-primary:hover {
+  background: #e6951a !important;
+  border-color: #e6951a !important;
+}
+
+.ant-steps .ant-steps-item-process .ant-steps-item-icon {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.ant-steps .ant-steps-item-finish .ant-steps-item-icon {
+  border-color: var(--primary) !important;
+}
+
+.ant-steps .ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon {
+  color: var(--primary) !important;
+}
+
+.ant-steps
+  .ant-steps-item-finish
+  > .ant-steps-item-container
+  > .ant-steps-item-tail::after {
+  background-color: var(--primary) !important;
+}
+
+.ant-card {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.ant-tag {
+  border-radius: 99px !important;
+  font-weight: 600;
+}
+
+.ant-input,
+.ant-input-number,
+.ant-input-affix-wrapper {
+  border-radius: 10px !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+/* Step card animation */
+.step-card-enter {
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed #d9d9d9;
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+}
+
+.upload-zone:hover,
+.upload-zone.dragging {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* Person chips */
+.person-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: default;
+  user-select: none;
+  transition: transform 0.15s;
+}
+
+.person-chip:hover {
+  transform: scale(1.04);
+}
+
+/* Assign buttons */
+.assign-person-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid #e8e8e8;
+  background: #fafafa;
+  color: #595959;
+  transition: all 0.15s;
+}
+
+.assign-person-btn:hover {
+  border-color: #bbb;
+}
+
+.assign-person-btn.selected {
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Result card */
+.result-person-card {
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.result-person-card::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: 0.15;
+  background: currentColor;
 }
