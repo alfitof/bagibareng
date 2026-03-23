@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SplitBill — Scan & Split Struk",
+  title: "BagiBareng — Scan & Split Struk",
   description: "Upload foto struk, scan otomatis, bagi tagihan dengan mudah",
 };
 
