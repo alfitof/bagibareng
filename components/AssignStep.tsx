@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Card,
-  Button,
-  Space,
-  Typography,
-  Tag,
-  Tooltip,
-  Progress,
-  Alert,
-  Badge,
-} from "antd";
+import { Card, Button, Space, Typography, Tag, Progress, Alert } from "antd";
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -19,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { BillState } from "@/lib/types";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface Props {
   bill: BillState;
@@ -35,33 +25,33 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
     const updated = current.includes(personId)
       ? current.filter((id) => id !== personId)
       : [...current, personId];
-    updateBill({
-      assignments: { ...bill.assignments, [itemId]: updated },
-    });
+    updateBill({ assignments: { ...bill.assignments, [itemId]: updated } });
   };
 
-  const assignAll = (itemId: string) => {
+  const assignAll = (itemId: string) =>
     updateBill({
       assignments: {
         ...bill.assignments,
         [itemId]: bill.people.map((p) => p.id),
       },
     });
-  };
 
   const assignedCount = bill.items.filter(
     (i) => (bill.assignments[i.id]?.length ?? 0) > 0,
   ).length;
 
-  const progress = Math.round((assignedCount / bill.items.length) * 100);
+  const progress =
+    bill.items.length > 0
+      ? Math.round((assignedCount / bill.items.length) * 100)
+      : 0;
 
   return (
     <Space orientation="vertical" size={16} style={{ width: "100%" }}>
       {/* Progress */}
       <Card size="small">
-        <Space
+        <div
           style={{
-            width: "100%",
+            display: "flex",
             justifyContent: "space-between",
             marginBottom: 8,
           }}
@@ -70,7 +60,7 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
           <Text type="secondary">
             {assignedCount} / {bill.items.length} item
           </Text>
-        </Space>
+        </div>
         <Progress
           percent={progress}
           strokeColor="#f5a623"
@@ -108,17 +98,17 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
                   transition: "all 0.2s",
                 }}
               >
-                {/* Item Header */}
-                <Space
+                <div
                   style={{
-                    width: "100%",
+                    display: "flex",
                     justifyContent: "space-between",
+                    alignItems: "flex-start",
                     marginBottom: 10,
+                    gap: 8,
                     flexWrap: "wrap",
-                    gap: 4,
                   }}
                 >
-                  <Space size={6}>
+                  <Space size={6} style={{ flexWrap: "wrap" }}>
                     {isAssigned ? (
                       <CheckCircleOutlined style={{ color: "#52c41a" }} />
                     ) : (
@@ -126,17 +116,14 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
                     )}
                     <Text strong style={{ fontSize: 14 }}>
                       {item.name}
-                      {item.qty > 1 && (
-                        <Tag
-                          style={{ marginLeft: 6, fontSize: 11 }}
-                          color="blue"
-                        >
-                          x{item.qty}
-                        </Tag>
-                      )}
                     </Text>
+                    {item.qty > 1 && (
+                      <Tag style={{ fontSize: 11 }} color="blue">
+                        x{item.qty}
+                      </Tag>
+                    )}
                   </Space>
-                  <Space size={6}>
+                  <Space size={6} style={{ flexWrap: "wrap" }}>
                     <Text style={{ color: "#f5a623", fontWeight: 700 }}>
                       {fmtRp(item.price * item.qty)}
                     </Text>
@@ -146,9 +133,8 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
                       </Tag>
                     )}
                   </Space>
-                </Space>
+                </div>
 
-                {/* Person Buttons */}
                 <Space wrap size={6}>
                   {bill.people.map((person) => {
                     const sel = assigned.includes(person.id);
@@ -187,7 +173,6 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
         </Space>
       </Card>
 
-      {/* Warning for unassigned */}
       {assignedCount < bill.items.length && (
         <Alert
           title={`${bill.items.length - assignedCount} item belum di-assign`}
@@ -198,13 +183,12 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
         />
       )}
 
-      {/* Navigation */}
-      <Space style={{ width: "100%", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", gap: 12 }}>
         <Button
           size="large"
           icon={<ArrowLeftOutlined />}
           onClick={() => goStep(2)}
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, flex: 1 }}
         >
           Kembali
         </Button>
@@ -213,11 +197,11 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
           size="large"
           onClick={() => goStep(4)}
           disabled={assignedCount === 0}
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, flex: 1 }}
         >
           Hitung Tagihan <ArrowRightOutlined />
         </Button>
-      </Space>
+      </div>
     </Space>
   );
 }

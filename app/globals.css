@@ -189,3 +189,30 @@ body {
   opacity: 0.15;
   background: currentColor;
 }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .ant-steps .ant-steps-item-title {
+    font-size: 11px !important;
+  }
+
+  .ant-card-body {
+    padding: 14px !important;
+  }
+
+  .ant-statistic-content-value {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Steps: hide title on very small screens, show only icons */
+  .ant-steps-small .ant-steps-item-title {
+    display: none;
+  }
+
+  /* Upload zone tighter */
+  .upload-zone {
+    padding: 28px 12px;
+  }
+}

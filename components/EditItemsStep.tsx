@@ -8,7 +8,6 @@ import {
   InputNumber,
   Space,
   Typography,
-  Table,
   Tag,
   Popconfirm,
   Tooltip,
@@ -28,7 +27,7 @@ import { BillItem, BillState } from "@/lib/types";
 import { parseReceiptText } from "@/lib/mockParser";
 import { v4 as uuidv4 } from "uuid";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 interface Props {
@@ -49,131 +48,34 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
 
   const addItem = () => {
     if (!newName.trim() || !newPrice) return;
-    const item: BillItem = {
-      id: uuidv4(),
-      name: newName.trim(),
-      price: newPrice,
-      qty: newQty,
-    };
-    updateBill({ items: [...bill.items, item] });
+    updateBill({
+      items: [
+        ...bill.items,
+        { id: uuidv4(), name: newName.trim(), price: newPrice, qty: newQty },
+      ],
+    });
     setNewName("");
     setNewPrice(null);
     setNewQty(1);
   };
 
-  const updateItem = (id: string, patch: Partial<BillItem>) => {
+  const updateItem = (id: string, patch: Partial<BillItem>) =>
     updateBill({
       items: bill.items.map((i) => (i.id === id ? { ...i, ...patch } : i)),
     });
-  };
 
   const deleteItem = (id: string) => {
-    updateBill({
-      items: bill.items.filter((i) => i.id !== id),
-      assignments: Object.fromEntries(
-        Object.entries(bill.assignments).filter(([k]) => k !== id),
-      ),
-    });
+    const assignments = { ...bill.assignments };
+    delete assignments[id];
+    updateBill({ items: bill.items.filter((i) => i.id !== id), assignments });
   };
 
-  const reparse = () => {
-    const items = parseReceiptText(bill.ocrRawText);
-    updateBill({ items });
-  };
-
-  const columns = [
-    {
-      title: "Nama Item",
-      dataIndex: "name",
-      key: "name",
-      ellipsis: false,
-      render: (val: string, record: BillItem) => (
-        <Input
-          value={val}
-          onChange={(e) => updateItem(record.id, { name: e.target.value })}
-          variant="borderless"
-          style={{
-            fontWeight: 600,
-            fontSize: 14,
-            padding: "4px 0",
-            whiteSpace: "normal",
-          }}
-        />
-      ),
-    },
-    {
-      title: "Qty",
-      dataIndex: "qty",
-      key: "qty",
-      width: 80,
-      render: (val: number, record: BillItem) => (
-        <InputNumber
-          value={val}
-          min={1}
-          max={99}
-          onChange={(v) => updateItem(record.id, { qty: v ?? 1 })}
-          style={{ width: 60 }}
-          size="small"
-        />
-      ),
-    },
-    {
-      title: "Harga Satuan",
-      dataIndex: "price",
-      key: "price",
-      width: 150,
-      render: (val: number, record: BillItem) => (
-        <InputNumber
-          value={val}
-          min={0}
-          step={500}
-          formatter={(v) => `Rp ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-          parser={(v) => Number(v!.replace(/[Rp\s.]/g, "")) as 0}
-          onChange={(v) => updateItem(record.id, { price: v ?? 0 })}
-          style={{ width: 130 }}
-          size="small"
-        />
-      ),
-    },
-    {
-      title: "Subtotal",
-      key: "subtotal",
-      width: 120,
-      render: (_: unknown, record: BillItem) => (
-        <Text strong style={{ color: "#f5a623" }}>
-          {fmtRp(record.price * record.qty)}
-        </Text>
-      ),
-    },
-    {
-      title: "",
-      key: "action",
-      width: 48,
-      render: (_: unknown, record: BillItem) => (
-        <Popconfirm
-          title="Hapus item ini?"
-          onConfirm={() => deleteItem(record.id)}
-          okText="Hapus"
-          cancelText="Batal"
-          okButtonProps={{ danger: true }}
-        >
-          <Tooltip title="Hapus item">
-            <Button
-              danger
-              ghost
-              size="small"
-              shape="circle"
-              icon={<DeleteOutlined />}
-            />
-          </Tooltip>
-        </Popconfirm>
-      ),
-    },
-  ];
+  const reparse = () =>
+    updateBill({ items: parseReceiptText(bill.ocrRawText) });
 
   return (
     <Space orientation="vertical" size={16} style={{ width: "100%" }}>
-      {/* OCR Raw Text (collapsible) */}
+      {/* Raw OCR */}
       {bill.ocrRawText && (
         <Card
           size="small"
@@ -214,7 +116,7 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         </Card>
       )}
 
-      {/* Items Table */}
+      {/* Items List */}
       <Card
         title={
           <Space>
@@ -227,96 +129,224 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         }
         extra={
           <Text type="secondary" style={{ fontSize: 12 }}>
-            Edit nama & harga jika kurang akurat
+            Edit jika OCR kurang akurat
           </Text>
         }
       >
         {bill.items.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="Belum ada item. Tambahkan di bawah."
+            description="Belum ada item."
           />
         ) : (
-          <Table
-            dataSource={bill.items}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            scroll={{ x: 480 }}
-            summary={() => (
-              <Table.Summary.Row>
-                <Table.Summary.Cell index={0} colSpan={3}>
-                  <Text strong>Total Struk</Text>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>
-                  <Text strong style={{ color: "#f5a623", fontSize: 15 }}>
-                    {fmtRp(totalBill)}
-                  </Text>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={2} />
-              </Table.Summary.Row>
-            )}
-          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Header Row */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 64px 140px auto",
+                gap: 8,
+                padding: "0 8px",
+              }}
+            >
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                NAMA ITEM
+              </Text>
+              <Text
+                type="secondary"
+                style={{ fontSize: 11, textAlign: "center" }}
+              >
+                QTY
+              </Text>
+              <Text
+                type="secondary"
+                style={{ fontSize: 11, textAlign: "right" }}
+              >
+                HARGA SATUAN
+              </Text>
+              <span />
+            </div>
+
+            {/* Item Rows */}
+            {bill.items.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 64px 140px auto",
+                  gap: 8,
+                  alignItems: "center",
+                  padding: "8px",
+                  background: "#fafafa",
+                  borderRadius: 8,
+                  border: "1px solid #f0f0f0",
+                }}
+              >
+                {/* Name — full width, wraps freely */}
+                <Input
+                  value={item.name}
+                  onChange={(e) =>
+                    updateItem(item.id, { name: e.target.value })
+                  }
+                  variant="borderless"
+                  style={{
+                    fontWeight: 600,
+                    fontSize: 13,
+                    padding: "0 4px",
+                    width: "100%",
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                  }}
+                />
+                {/* Qty */}
+                <InputNumber
+                  value={item.qty}
+                  min={1}
+                  max={99}
+                  onChange={(v) => updateItem(item.id, { qty: v ?? 1 })}
+                  style={{ width: "100%" }}
+                  size="small"
+                />
+                {/* Price */}
+                <InputNumber
+                  value={item.price}
+                  min={0}
+                  step={500}
+                  formatter={(v) =>
+                    v
+                      ? `Rp ${String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`
+                      : ""
+                  }
+                  parser={(v) => Number(v!.replace(/[Rp\s.]/g, "")) as 0}
+                  onChange={(v) => updateItem(item.id, { price: v ?? 0 })}
+                  style={{ width: "100%" }}
+                  size="small"
+                />
+                {/* Delete */}
+                <Popconfirm
+                  title="Hapus item ini?"
+                  onConfirm={() => deleteItem(item.id)}
+                  okText="Hapus"
+                  cancelText="Batal"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Tooltip title="Hapus">
+                    <Button
+                      danger
+                      ghost
+                      size="small"
+                      shape="circle"
+                      icon={<DeleteOutlined />}
+                    />
+                  </Tooltip>
+                </Popconfirm>
+              </div>
+            ))}
+
+            {/* Subtotal per item hint */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 4,
+              }}
+            >
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Subtotal masing-masing dihitung otomatis saat assign
+              </Text>
+            </div>
+          </div>
         )}
 
-        <Divider style={{ margin: "16px 0" }} />
+        {/* Total */}
+        {bill.items.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "#fff7e6",
+              border: "1px solid #ffd591",
+              borderRadius: 10,
+              padding: "12px 16px",
+              marginTop: 12,
+            }}
+          >
+            <Text strong style={{ fontSize: 14 }}>
+              💰 Total Struk
+            </Text>
+            <Text strong style={{ fontSize: 18, color: "#f5a623" }}>
+              {fmtRp(totalBill)}
+            </Text>
+          </div>
+        )}
 
-        {/* Add Item Row */}
+        <Divider style={{ margin: "16px 0 12px" }} />
+
+        {/* Add Item Manual — improved spacing */}
         <div>
           <Text
             strong
-            style={{ display: "block", marginBottom: 8, fontSize: 13 }}
+            style={{ display: "block", marginBottom: 12, fontSize: 13 }}
           >
             ➕ Tambah Item Manual
           </Text>
-          <Space.Compact style={{ width: "100%" }}>
+          <Space orientation="vertical" size={8} style={{ width: "100%" }}>
             <Input
               placeholder="Nama item..."
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onPressEnter={addItem}
-              style={{ flex: 1 }}
+              size="large"
+              style={{ borderRadius: 10 }}
             />
-            <InputNumber
-              placeholder="Qty"
-              value={newQty}
-              min={1}
-              onChange={(v) => setNewQty(v ?? 1)}
-              style={{ width: 65 }}
-            />
-            <InputNumber
-              placeholder="Harga"
-              value={newPrice}
-              min={0}
-              step={500}
-              formatter={(v) =>
-                v ? `Rp ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""
-              }
-              parser={(v) => Number(v!.replace(/[Rp\s.]/g, "")) as 0}
-              onChange={(v) => setNewPrice(v)}
-              style={{ width: 130 }}
-              onPressEnter={addItem}
-            />
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={addItem}
-              disabled={!newName.trim() || !newPrice}
-            >
-              Tambah
-            </Button>
-          </Space.Compact>
+            <div style={{ display: "flex", gap: 8 }}>
+              <InputNumber
+                placeholder="Qty"
+                value={newQty}
+                min={1}
+                onChange={(v) => setNewQty(v ?? 1)}
+                style={{ width: 90, borderRadius: 10 }}
+                size="large"
+              />
+              <InputNumber
+                placeholder="Harga satuan"
+                value={newPrice}
+                min={0}
+                step={500}
+                formatter={(v) =>
+                  v
+                    ? `Rp ${String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`
+                    : ""
+                }
+                parser={(v) => Number(v!.replace(/[Rp\s.]/g, "")) as 0}
+                onChange={(v) => setNewPrice(v)}
+                style={{ flex: 1, borderRadius: 10 }}
+                size="large"
+                onPressEnter={addItem}
+              />
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={addItem}
+                disabled={!newName.trim() || !newPrice}
+                size="large"
+                style={{ borderRadius: 10, minWidth: 48 }}
+              />
+            </div>
+          </Space>
         </div>
       </Card>
 
       {/* Navigation */}
-      <Space style={{ width: "100%", justifyContent: "space-between" }}>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
+      >
         <Button
           size="large"
           icon={<ArrowLeftOutlined />}
           onClick={() => goStep(0)}
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, flex: 1 }}
         >
           Kembali
         </Button>
@@ -325,11 +355,11 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
           size="large"
           disabled={bill.items.length === 0}
           onClick={() => goStep(2)}
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, flex: 1 }}
         >
           Lanjut ke Orang <ArrowRightOutlined />
         </Button>
-      </Space>
+      </div>
     </Space>
   );
 }

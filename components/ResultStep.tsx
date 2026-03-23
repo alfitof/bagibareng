@@ -8,21 +8,22 @@ import {
   Typography,
   Divider,
   Tag,
+  Modal,
   message,
   Row,
   Col,
-  Statistic,
-  List,
 } from "antd";
 import {
   CopyOutlined,
   ReloadOutlined,
   ShareAltOutlined,
   CheckOutlined,
+  UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { BillState } from "@/lib/types";
 
-const { Title, Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 interface Props {
   bill: BillState;
@@ -33,24 +34,24 @@ interface Props {
 interface PersonResult {
   person: BillState["people"][0];
   total: number;
-  items: {
-    name: string;
-    share: number;
-    qty: number;
-    splitCount: number;
-  }[];
+  items: { name: string; share: number; qty: number; splitCount: number }[];
 }
 
 export default function ResultStep({ bill, goStep, resetAll }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareModalPerson, setShareModalPerson] = useState<PersonResult | null>(
+    null,
+  );
+  const [copiedPersonId, setCopiedPersonId] = useState<string | null>(null);
   const [msgApi, contextHolder] = message.useMessage();
 
   const fmtRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
   const results: PersonResult[] = useMemo(() => {
     return bill.people.map((person) => {
-      const items: PersonResult["items"] = [];
       let total = 0;
+      const items: PersonResult["items"] = [];
       for (const item of bill.items) {
         const assigned = bill.assignments[item.id] ?? [];
         if (!assigned.includes(person.id)) continue;
@@ -69,101 +70,220 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
 
   const grandTotal = results.reduce((sum, r) => sum + r.total, 0);
 
-  const shareText = useMemo(() => {
-    const lines: string[] = [];
-    lines.push("🧾 SPLIT BILL");
-    lines.push("=".repeat(28));
+  const shareAllText = useMemo(() => {
+    const lines = ["🧾 *BAGIBARENG — SPLIT BILL*", "━".repeat(26)];
     for (const r of results) {
-      lines.push(`\n${r.person.avatar} ${r.person.name}`);
+      lines.push(`\n${r.person.avatar} *${r.person.name}*`);
       for (const it of r.items) {
         const note = it.splitCount > 1 ? ` (÷${it.splitCount})` : "";
         lines.push(`  • ${it.name}${note}: ${fmtRp(it.share)}`);
       }
-      lines.push(`  ➡ TOTAL: ${fmtRp(r.total)}`);
+      lines.push(`  ➡ *Total: ${fmtRp(r.total)}*`);
     }
-    lines.push("\n" + "=".repeat(28));
-    lines.push(`💰 Grand Total: ${fmtRp(grandTotal)}`);
-    lines.push("\nDibuat dengan SplitBill App 🧾");
+    lines.push("\n" + "━".repeat(26));
+    lines.push(`💰 Grand Total: *${fmtRp(grandTotal)}*`);
+    lines.push("\nDibuat dengan BagiBareng 🧾");
     return lines.join("\n");
   }, [results, grandTotal]);
 
-  const handleCopy = async () => {
+  const buildPersonText = (r: PersonResult) => {
+    const lines = [
+      `🧾 *BAGIBARENG — Tagihan ${r.person.avatar} ${r.person.name}*`,
+      "━".repeat(26),
+    ];
+    for (const it of r.items) {
+      const note = it.splitCount > 1 ? ` (dibagi ${it.splitCount} orang)` : "";
+      lines.push(`• ${it.name}${note}: ${fmtRp(it.share)}`);
+    }
+    lines.push("━".repeat(26));
+    lines.push(`💰 *Total kamu: ${fmtRp(r.total)}*`);
+    lines.push("\nDibuat dengan BagiBareng 🧾");
+    return lines.join("\n");
+  };
+
+  const handleCopyAll = async () => {
     try {
-      await navigator.clipboard.writeText(shareText);
-      setCopied(true);
-      msgApi.success("Berhasil disalin!");
-      setTimeout(() => setCopied(false), 2500);
+      await navigator.clipboard.writeText(shareAllText);
+      setCopiedAll(true);
+      msgApi.success("Berhasil disalin! Tempel ke grup chat kamu 🎉");
+      setTimeout(() => setCopiedAll(false), 2500);
     } catch {
       msgApi.error("Gagal menyalin");
     }
+  };
+
+  const handleCopyPerson = async (r: PersonResult) => {
+    try {
+      await navigator.clipboard.writeText(buildPersonText(r));
+      setCopiedPersonId(r.person.id);
+      msgApi.success(`Tagihan ${r.person.name} disalin!`);
+      setTimeout(() => setCopiedPersonId(null), 2500);
+    } catch {
+      msgApi.error("Gagal menyalin");
+    }
+  };
+
+  const openSharePerson = (r: PersonResult) => {
+    setShareModalPerson(r);
+    setShareModalOpen(true);
   };
 
   return (
     <>
       {contextHolder}
       <Space orientation="vertical" size={16} style={{ width: "100%" }}>
-        {/* Header Summary */}
-        <Card style={{ background: "#fff7e6", border: "1px solid #ffd591" }}>
-          <Row gutter={16} justify="center">
-            <Col>
-              <Statistic
-                title="Total Struk"
-                value={grandTotal}
-                prefix="Rp"
-                formatter={(v) => Number(v).toLocaleString("id-ID")}
-                styles={{
-                  content: { color: "#f5a623", fontWeight: 800 },
+        {/* ── Summary Stats ── */}
+        <Card
+          style={{
+            background: "linear-gradient(135deg, #fff7e6 0%, #fffbe6 100%)",
+            border: "1px solid #ffd591",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 16,
+              textAlign: "center",
+            }}
+          >
+            <div>
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 11,
+                  display: "block",
+                  marginBottom: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
                 }}
-              />
-            </Col>
-            <Col>
-              <Statistic
-                title="Jumlah Orang"
-                value={bill.people.length}
-                suffix="orang"
-                styles={{
-                  content: { fontWeight: 800 },
+              >
+                Total Struk
+              </Text>
+              <Text
+                strong
+                style={{
+                  fontSize: 20,
+                  color: "#f5a623",
+                  display: "block",
+                  lineHeight: 1.2,
                 }}
-              />
-            </Col>
-            <Col>
-              <Statistic
-                title="Item"
-                value={bill.items.length}
-                suffix="item"
-                styles={{
-                  content: { fontWeight: 800 },
+              >
+                {fmtRp(grandTotal)}
+              </Text>
+            </div>
+            <div
+              style={{
+                borderLeft: "1px solid #ffd591",
+                borderRight: "1px solid #ffd591",
+              }}
+            >
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 11,
+                  display: "block",
+                  marginBottom: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
                 }}
-              />
-            </Col>
-          </Row>
+              >
+                Jumlah Orang
+              </Text>
+              <Text
+                strong
+                style={{ fontSize: 20, display: "block", lineHeight: 1.2 }}
+              >
+                {bill.people.length}
+                <span
+                  style={{ fontSize: 13, fontWeight: 400, color: "#8c8c8c" }}
+                >
+                  {" "}
+                  orang
+                </span>
+              </Text>
+            </div>
+            <div>
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 11,
+                  display: "block",
+                  marginBottom: 4,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Total Item
+              </Text>
+              <Text
+                strong
+                style={{ fontSize: 20, display: "block", lineHeight: 1.2 }}
+              >
+                {bill.items.length}
+                <span
+                  style={{ fontSize: 13, fontWeight: 400, color: "#8c8c8c" }}
+                >
+                  {" "}
+                  item
+                </span>
+              </Text>
+            </div>
+          </div>
         </Card>
 
-        {/* Per Person Cards */}
+        {/* ── Per Person Cards ── */}
         <Card title="💰 Tagihan Per Orang">
-          <Row gutter={[12, 12]}>
+          <Row gutter={[12, 12]} align="stretch">
             {results.map((r) => (
               <Col xs={24} sm={12} key={r.person.id}>
                 <div
-                  className="result-person-card"
                   style={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 16,
+                    padding: 20,
                     background: r.person.color + "18",
                     border: `2px solid ${r.person.color}44`,
+                    position: "relative",
+                    overflow: "hidden",
                   }}
                 >
+                  {/* Decorative circle */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: -20,
+                      right: -20,
+                      width: 80,
+                      height: 80,
+                      borderRadius: "50%",
+                      background: r.person.color,
+                      opacity: 0.12,
+                    }}
+                  />
+
                   {/* Person Header */}
-                  <Space style={{ marginBottom: 12 }}>
-                    <span style={{ fontSize: 24 }}>{r.person.avatar}</span>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <span style={{ fontSize: 26 }}>{r.person.avatar}</span>
                     <Text
                       strong
                       style={{ fontSize: 16, color: r.person.color }}
                     >
                       {r.person.name}
                     </Text>
-                  </Space>
+                  </div>
 
                   {/* Items */}
-                  <div style={{ marginBottom: 10 }}>
+                  <div style={{ flex: 1, marginBottom: 10 }}>
                     {r.items.length === 0 ? (
                       <Text type="secondary" style={{ fontSize: 12 }}>
                         Tidak ada item
@@ -175,19 +295,21 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                           style={{
                             display: "flex",
                             justifyContent: "space-between",
+                            alignItems: "flex-start",
                             fontSize: 12,
                             color: "#595959",
                             padding: "2px 0",
+                            gap: 8,
                           }}
                         >
-                          <span>
+                          <span style={{ flex: 1, wordBreak: "break-word" }}>
                             {it.name}
                             {it.splitCount > 1 && (
                               <Tag
                                 style={{
                                   marginLeft: 4,
                                   fontSize: 10,
-                                  padding: "0 5px",
+                                  padding: "0 4px",
                                 }}
                                 color="default"
                               >
@@ -195,7 +317,7 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                               </Tag>
                             )}
                           </span>
-                          <span style={{ fontWeight: 600 }}>
+                          <span style={{ fontWeight: 600, flexShrink: 0 }}>
                             {fmtRp(it.share)}
                           </span>
                         </div>
@@ -231,33 +353,26 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
           </Row>
         </Card>
 
-        {/* Share Section */}
+        {/* ── Share ke Grup ── */}
         <Card
           title={
             <Space>
-              <ShareAltOutlined />
-              <span>Share Hasil</span>
+              <UsergroupAddOutlined style={{ color: "#f5a623" }} />
+              <span>Share ke Grup</span>
             </Space>
           }
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-              onClick={handleCopy}
-              style={{
-                background: copied ? "#52c41a" : undefined,
-                borderColor: copied ? "#52c41a" : undefined,
-              }}
-            >
-              {copied ? "Tersalin!" : "Copy"}
-            </Button>
-          }
         >
+          <Text
+            type="secondary"
+            style={{ fontSize: 12, display: "block", marginBottom: 10 }}
+          >
+            Salin ringkasan lengkap untuk dikirim ke grup chat (WhatsApp, LINE,
+            Telegram, dll)
+          </Text>
           <pre
             style={{
               background: "#f5f5f5",
-              padding: 16,
+              padding: 14,
               borderRadius: 10,
               fontSize: 12,
               fontFamily: "monospace",
@@ -266,18 +381,86 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
               color: "#595959",
               margin: 0,
               lineHeight: 1.8,
+              maxHeight: 260,
+              overflowY: "auto",
             }}
           >
-            {shareText}
+            {shareAllText}
           </pre>
+          <Button
+            type="primary"
+            block
+            size="large"
+            // icon={copiedAll ? <CheckOutlined /> : <ShareAltOutlined />}
+            onClick={handleCopyAll}
+            style={{
+              marginTop: 10,
+              borderRadius: 10,
+              height: 48,
+              background: copiedAll ? "#52c41a" : undefined,
+              borderColor: copiedAll ? "#52c41a" : undefined,
+            }}
+          >
+            {copiedAll ? "✅ Tersalin!" : "📋 Copy & Share ke Grup"}
+          </Button>
         </Card>
 
-        {/* Actions */}
-        <Space style={{ width: "100%", justifyContent: "space-between" }}>
+        {/* ── Share Personal ── */}
+        <Card
+          title={
+            <Space>
+              <UserOutlined style={{ color: "#f5a623" }} />
+              <span>Share Personal</span>
+            </Space>
+          }
+        >
+          <Text
+            type="secondary"
+            style={{ fontSize: 12, display: "block", marginBottom: 12 }}
+          >
+            Kirim tagihan masing-masing ke personal chat
+          </Text>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+              gap: 8,
+            }}
+          >
+            {results.map((r) => (
+              <Button
+                key={r.person.id}
+                onClick={() => openSharePerson(r)}
+                style={{
+                  height: "auto",
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  borderColor: r.person.color + "55",
+                  background: r.person.color + "0f",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{r.person.avatar}</span>
+                <Text strong style={{ fontSize: 12, color: r.person.color }}>
+                  {r.person.name}
+                </Text>
+                <Text style={{ fontSize: 11, color: "#8c8c8c" }}>
+                  {fmtRp(r.total)}
+                </Text>
+              </Button>
+            ))}
+          </div>
+        </Card>
+
+        {/* ── Actions ── */}
+        <div style={{ display: "flex", gap: 12 }}>
           <Button
             size="large"
             onClick={() => goStep(3)}
-            style={{ borderRadius: 10 }}
+            style={{ borderRadius: 10, flex: 1 }}
           >
             ← Edit Assign
           </Button>
@@ -286,12 +469,75 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
             size="large"
             icon={<ReloadOutlined />}
             onClick={resetAll}
-            style={{ borderRadius: 10 }}
+            style={{ borderRadius: 10, flex: 1 }}
           >
             Split Baru
           </Button>
-        </Space>
+        </div>
       </Space>
+
+      {/* ── Share Person Modal ── */}
+      <Modal
+        title={
+          shareModalPerson
+            ? `${shareModalPerson.person.avatar} Tagihan ${shareModalPerson.person.name}`
+            : "Share Tagihan"
+        }
+        open={shareModalOpen}
+        onCancel={() => setShareModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShareModalOpen(false)}>
+            Tutup
+          </Button>,
+          <Button
+            key="copy"
+            type="primary"
+            // icon={
+            //   shareModalPerson &&
+            //   copiedPersonId === shareModalPerson.person.id ? (
+            //     <CheckOutlined />
+            //   ) : (
+            //     <CopyOutlined />
+            //   )
+            // }
+            onClick={() =>
+              shareModalPerson && handleCopyPerson(shareModalPerson)
+            }
+          >
+            {shareModalPerson && copiedPersonId === shareModalPerson.person.id
+              ? "✅ Tersalin!"
+              : "Copy & Kirim"}
+          </Button>,
+        ]}
+        width={400}
+      >
+        {shareModalPerson && (
+          <>
+            <Text
+              type="secondary"
+              style={{ fontSize: 12, display: "block", marginBottom: 10 }}
+            >
+              Salin teks di bawah dan kirim ke personal chat{" "}
+              {shareModalPerson.person.name}:
+            </Text>
+            <pre
+              style={{
+                background: "#f5f5f5",
+                padding: 14,
+                borderRadius: 10,
+                fontSize: 12,
+                fontFamily: "monospace",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                color: "#595959",
+                lineHeight: 1.8,
+              }}
+            >
+              {buildPersonText(shareModalPerson)}
+            </pre>
+          </>
+        )}
+      </Modal>
     </>
   );
 }

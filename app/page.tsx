@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Steps, Typography, Layout, Space } from "antd";
+import { Steps, Typography, Layout } from "antd";
 import {
   CameraOutlined,
   EditOutlined,
@@ -31,67 +31,50 @@ const INITIAL_STATE: BillState = {
   assignments: {},
 };
 
-const STEPS = [
-  { title: "Upload", icon: <CameraOutlined /> },
-  { title: "Edit Item", icon: <EditOutlined /> },
-  { title: "Orang", icon: <TeamOutlined /> },
-  { title: "Assign", icon: <SwapOutlined /> },
-  { title: "Hasil", icon: <TrophyOutlined /> },
-];
-
 const getSteps = (current: number) => [
   {
-    title: "Upload",
+    title: (
+      <span style={{ fontWeight: current === 0 ? 800 : 400 }}>Upload</span>
+    ),
     icon: (
       <CameraOutlined
-        style={{
-          fontSize: 14,
-          color: current === 0 ? "#fff" : "#bfbfbf",
-        }}
+        style={{ fontSize: 14, color: current === 0 ? "#fff" : "#bfbfbf" }}
       />
     ),
   },
   {
-    title: "Edit Item",
+    title: (
+      <span style={{ fontWeight: current === 1 ? 800 : 400 }}>Edit Item</span>
+    ),
     icon: (
       <EditOutlined
-        style={{
-          fontSize: 14,
-          color: current === 1 ? "#fff" : "#bfbfbf",
-        }}
+        style={{ fontSize: 14, color: current === 1 ? "#fff" : "#bfbfbf" }}
       />
     ),
   },
   {
-    title: "Orang",
+    title: <span style={{ fontWeight: current === 2 ? 800 : 400 }}>Orang</span>,
     icon: (
       <TeamOutlined
-        style={{
-          fontSize: 14,
-          color: current === 2 ? "#fff" : "#bfbfbf",
-        }}
+        style={{ fontSize: 14, color: current === 2 ? "#fff" : "#bfbfbf" }}
       />
     ),
   },
   {
-    title: "Assign",
+    title: (
+      <span style={{ fontWeight: current === 3 ? 800 : 400 }}>Assign</span>
+    ),
     icon: (
       <SwapOutlined
-        style={{
-          fontSize: 14,
-          color: current === 3 ? "#fff" : "#bfbfbf",
-        }}
+        style={{ fontSize: 14, color: current === 3 ? "#fff" : "#bfbfbf" }}
       />
     ),
   },
   {
-    title: "Hasil",
+    title: <span style={{ fontWeight: current === 4 ? 800 : 400 }}>Hasil</span>,
     icon: (
       <TrophyOutlined
-        style={{
-          fontSize: 14,
-          color: current === 4 ? "#fff" : "#bfbfbf",
-        }}
+        style={{ fontSize: 14, color: current === 4 ? "#fff" : "#bfbfbf" }}
       />
     ),
   },
@@ -101,21 +84,19 @@ export default function HomePage() {
   const [bill, setBill] = useState<BillState>(INITIAL_STATE);
 
   const goStep = (step: number) => setBill((prev) => ({ ...prev, step }));
-
   const updateBill = (patch: Partial<BillState>) =>
     setBill((prev) => ({ ...prev, ...patch }));
-
   const resetAll = () => setBill(INITIAL_STATE);
 
   return (
     <Layout style={{ minHeight: "100vh", background: "#f7f8fa" }}>
       <Content
-        style={{ maxWidth: 760, margin: "0 auto", padding: "32px 16px" }}
+        style={{ maxWidth: 760, margin: "0 auto", padding: "24px 16px" }}
       >
         {/* Header */}
-        <Space orientation="vertical" size={4} style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 28 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 32 }}>🧾</span>
+            <span style={{ fontSize: 30 }}>🧾</span>
             <Title
               level={2}
               style={{
@@ -126,24 +107,35 @@ export default function HomePage() {
                 color: "#1a1a2e",
               }}
             >
-              Split<span style={{ color: "#f5a623" }}>Bill</span>
+              Bagi<span style={{ color: "#f5a623" }}>Bareng</span>
             </Title>
           </div>
-          <Text style={{ color: "#8c8c8c", fontSize: 13 }}>
+          <Text
+            style={{
+              color: "#8c8c8c",
+              fontSize: 13,
+              marginTop: 4,
+              display: "block",
+            }}
+          >
             Upload foto struk → scan otomatis → bagi tagihan per orang
           </Text>
-        </Space>
+        </div>
 
         {/* Steps */}
         <Steps
           current={bill.step}
           items={getSteps(bill.step)}
           size="small"
-          style={{ marginBottom: 32 }}
+          style={{ marginBottom: 28 }}
         />
 
         {/* Step Content */}
-        <div className="step-card-enter" key={bill.step}>
+        <div
+          className="step-card-enter"
+          key={bill.step}
+          style={{ minHeight: 520 }}
+        >
           {bill.step === 0 && (
             <UploadStep bill={bill} updateBill={updateBill} goStep={goStep} />
           )}

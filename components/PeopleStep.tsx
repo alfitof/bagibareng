@@ -7,10 +7,9 @@ import {
   Input,
   Space,
   Typography,
-  Avatar,
   Tooltip,
   Empty,
-  Tag,
+  Modal,
 } from "antd";
 import {
   UserAddOutlined,
@@ -19,16 +18,19 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { BillState, Person } from "@/lib/types";
-import { PERSON_COLORS, PERSON_AVATARS } from "@/lib/colors";
+import { PERSON_COLORS } from "@/lib/colors";
 import { v4 as uuidv4 } from "uuid";
 
 const { Title, Text } = Typography;
 
-interface Props {
-  bill: BillState;
-  updateBill: (patch: Partial<BillState>) => void;
-  goStep: (step: number) => void;
-}
+// Grouped avatars for picker
+const AVATAR_GROUPS = {
+  "👨 Pria": ["👨", "🧔", "👨‍💼", "👨‍🍳", "👨‍🎓", "🧑", "👦", "🧒"],
+  "👩 Wanita": ["👩", "👩‍💼", "👩‍🍳", "👩‍🎓", "🧕", "👧", "👱‍♀️", "💁‍♀️"],
+  "😀 Ekspresi": ["😀", "😎", "🤩", "😄", "🥳", "😏", "🤓", "😇"],
+  "🐾 Hewan": ["🐶", "🐱", "🐼", "🦊", "🐸", "🐯", "🦁", "🐨"],
+  "🎭 Karakter": ["🤖", "👻", "🎃", "🦸", "🧙", "🧛", "🧟", "🤠"],
+};
 
 const QUICK_NAMES = [
   "Aku",
@@ -41,8 +43,20 @@ const QUICK_NAMES = [
   "Fajar",
 ];
 
+interface Props {
+  bill: BillState;
+  updateBill: (patch: Partial<BillState>) => void;
+  goStep: (step: number) => void;
+}
+
 export default function PeopleStep({ bill, updateBill, goStep }: Props) {
   const [inputName, setInputName] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState("🧑");
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [tempAvatar, setTempAvatar] = useState("🧑");
+
+  // Per-person avatar edit
+  const [editPersonId, setEditPersonId] = useState<string | null>(null);
 
   const addPerson = (name: string) => {
     const trimmed = name.trim();
@@ -54,7 +68,7 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
       id: uuidv4(),
       name: trimmed,
       color: PERSON_COLORS[idx % PERSON_COLORS.length],
-      avatar: PERSON_AVATARS[idx % PERSON_AVATARS.length],
+      avatar: selectedAvatar,
     };
     updateBill({ people: [...bill.people, person] });
     setInputName("");
@@ -65,10 +79,34 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
     for (const key in assignments) {
       assignments[key] = assignments[key].filter((pid) => pid !== id);
     }
-    updateBill({
-      people: bill.people.filter((p) => p.id !== id),
-      assignments,
-    });
+    updateBill({ people: bill.people.filter((p) => p.id !== id), assignments });
+  };
+
+  const openAvatarEdit = (personId: string) => {
+    const person = bill.people.find((p) => p.id === personId);
+    if (!person) return;
+    setTempAvatar(person.avatar);
+    setEditPersonId(personId);
+    setAvatarPickerOpen(true);
+  };
+
+  const openNewPersonAvatarPicker = () => {
+    setTempAvatar(selectedAvatar);
+    setEditPersonId(null);
+    setAvatarPickerOpen(true);
+  };
+
+  const confirmAvatar = () => {
+    if (editPersonId) {
+      updateBill({
+        people: bill.people.map((p) =>
+          p.id === editPersonId ? { ...p, avatar: tempAvatar } : p,
+        ),
+      });
+    } else {
+      setSelectedAvatar(tempAvatar);
+    }
+    setAvatarPickerOpen(false);
   };
 
   const availableQuick = QUICK_NAMES.filter(
@@ -82,27 +120,52 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
           👥 Siapa yang ikut makan?
         </Title>
 
-        {/* Add Person Input */}
-        <Space.Compact style={{ width: "100%", marginBottom: 16 }}>
+        {/* Add Person Row */}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginBottom: 16,
+            alignItems: "stretch",
+          }}
+        >
+          {/* Avatar selector button */}
+          <Tooltip title="Pilih avatar">
+            <Button
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                fontSize: 20,
+                flexShrink: 0,
+                padding: 0,
+                border: "1px dashed #d9d9d9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={openNewPersonAvatarPicker}
+            >
+              {selectedAvatar}
+            </Button>
+          </Tooltip>
           <Input
             placeholder="Masukkan nama..."
             value={inputName}
             onChange={(e) => setInputName(e.target.value)}
-            onPressEnter={() => {
-              addPerson(inputName);
-            }}
+            onPressEnter={() => addPerson(inputName)}
             prefix={<UserAddOutlined style={{ color: "#bbb" }} />}
-            size="large"
+            style={{ flex: 1, height: 40, borderRadius: 10 }}
           />
           <Button
             type="primary"
-            size="large"
             onClick={() => addPerson(inputName)}
             disabled={!inputName.trim()}
+            style={{ height: 40, borderRadius: 10, paddingInline: 16 }}
           >
             Tambah
           </Button>
-        </Space.Compact>
+        </div>
 
         {/* Quick Add */}
         {availableQuick.length > 0 && (
@@ -153,7 +216,15 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
                     color: person.color,
                   }}
                 >
-                  <span>{person.avatar}</span>
+                  {/* Click avatar to edit */}
+                  <Tooltip title="Ganti avatar">
+                    <span
+                      style={{ cursor: "pointer", fontSize: 18 }}
+                      onClick={() => openAvatarEdit(person.id)}
+                    >
+                      {person.avatar}
+                    </span>
+                  </Tooltip>
                   <span>{person.name}</span>
                   <Tooltip title="Hapus">
                     <CloseOutlined
@@ -183,12 +254,12 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
       )}
 
       {/* Navigation */}
-      <Space style={{ width: "100%", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", gap: 12 }}>
         <Button
           size="large"
           icon={<ArrowLeftOutlined />}
           onClick={() => goStep(1)}
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, flex: 1 }}
         >
           Kembali
         </Button>
@@ -197,11 +268,60 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
           size="large"
           disabled={bill.people.length === 0}
           onClick={() => goStep(3)}
-          style={{ borderRadius: 10 }}
+          style={{ borderRadius: 10, flex: 1 }}
         >
           Assign Item <ArrowRightOutlined />
         </Button>
-      </Space>
+      </div>
+
+      {/* Avatar Picker Modal */}
+      <Modal
+        title="Pilih Avatar"
+        open={avatarPickerOpen}
+        onOk={confirmAvatar}
+        onCancel={() => setAvatarPickerOpen(false)}
+        okText="Pilih"
+        cancelText="Batal"
+        width={380}
+        styles={{ body: { maxHeight: 400, overflowY: "auto" } }}
+      >
+        {Object.entries(AVATAR_GROUPS).map(([group, emojis]) => (
+          <div key={group} style={{ marginBottom: 16 }}>
+            <Text
+              type="secondary"
+              style={{ fontSize: 11, display: "block", marginBottom: 8 }}
+            >
+              {group}
+            </Text>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {emojis.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => setTempAvatar(emoji)}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    fontSize: 24,
+                    border:
+                      tempAvatar === emoji
+                        ? "2px solid #f5a623"
+                        : "2px solid #f0f0f0",
+                    borderRadius: 10,
+                    background: tempAvatar === emoji ? "#fff7e6" : "#fafafa",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Modal>
     </Space>
   );
 }

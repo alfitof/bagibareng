@@ -2,16 +2,11 @@
 
 import { useRef, useState } from "react";
 import { Card, Button, Space, Typography, Spin, Alert } from "antd";
-import {
-  UploadOutlined,
-  ScanOutlined,
-  EditOutlined,
-  InboxOutlined,
-} from "@ant-design/icons";
+import { ScanOutlined, EditOutlined, InboxOutlined } from "@ant-design/icons";
 import { BillState } from "@/lib/types";
 import { MOCK_OCR_TEXT, parseReceiptText } from "@/lib/mockParser";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface Props {
   bill: BillState;
@@ -36,13 +31,11 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
     if (file && file.type.startsWith("image/")) handleFile(file);
   };
 
-  // Simulate OCR scan with mock data (replace with Tesseract.js later)
   const handleScan = async () => {
     setScanning(true);
-    await new Promise((r) => setTimeout(r, 1800)); // simulate delay
-    const raw = MOCK_OCR_TEXT;
-    const items = parseReceiptText(raw);
-    updateBill({ ocrRawText: raw, items });
+    await new Promise((r) => setTimeout(r, 1800));
+    const items = parseReceiptText(MOCK_OCR_TEXT);
+    updateBill({ ocrRawText: MOCK_OCR_TEXT, items });
     setScanning(false);
     goStep(1);
   };
@@ -59,7 +52,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
           📷 Upload Foto Struk
         </Title>
 
-        {/* Upload Zone */}
         {!bill.imagePreviewUrl ? (
           <div
             className={`upload-zone ${dragging ? "dragging" : ""}`}
@@ -103,7 +95,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -119,7 +110,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
                 marginBottom: 12,
               }}
             />
-            <br />
             <Button
               size="small"
               onClick={() => {
@@ -143,7 +133,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         )}
       </Card>
 
-      {/* Demo notice */}
       <Alert
         title="Mode Demo"
         description="Saat ini OCR menggunakan data mock untuk demo UI. Integrasi Tesseract.js akan ditambahkan di tahap berikutnya."
@@ -152,43 +141,38 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         style={{ borderRadius: 12 }}
       />
 
-      {/* Actions */}
-      <Space style={{ width: "100%" }} orientation="vertical" size={10}>
-        {scanning ? (
-          <Card style={{ textAlign: "center", padding: "20px 0" }}>
-            <Spin size="large" />
-            <br />
-            <Text type="secondary" style={{ marginTop: 12, display: "block" }}>
-              Sedang membaca struk...
-            </Text>
-          </Card>
-        ) : (
-          <>
-            <Button
-              type="primary"
-              size="large"
-              block
-              icon={<ScanOutlined />}
-              onClick={handleScan}
-              disabled={!bill.imagePreviewUrl}
-              style={{ height: 48, fontSize: 15, borderRadius: 12 }}
-            >
-              🔍 Scan dengan OCR
-            </Button>
-            <Button
-              size="large"
-              block
-              icon={<EditOutlined />}
-              onClick={handleManual}
-              style={{ height: 48, fontSize: 15, borderRadius: 12 }}
-            >
-              ⌨️ Input Manual
-            </Button>
-          </>
-        )}
-      </Space>
+      {scanning ? (
+        <Card style={{ textAlign: "center", padding: "20px 0" }}>
+          <Spin size="large" />
+          <Text type="secondary" style={{ marginTop: 12, display: "block" }}>
+            Sedang membaca struk...
+          </Text>
+        </Card>
+      ) : (
+        <Space orientation="vertical" size={10} style={{ width: "100%" }}>
+          <Button
+            type="primary"
+            size="large"
+            block
+            icon={<ScanOutlined />}
+            onClick={handleScan}
+            disabled={!bill.imagePreviewUrl}
+            style={{ height: 48, fontSize: 15, borderRadius: 12 }}
+          >
+            🔍 Scan dengan OCR
+          </Button>
+          <Button
+            size="large"
+            block
+            icon={<EditOutlined />}
+            onClick={handleManual}
+            style={{ height: 48, fontSize: 15, borderRadius: 12 }}
+          >
+            ⌨️ Input Manual
+          </Button>
+        </Space>
+      )}
 
-      {/* Tips */}
       <Card
         size="small"
         style={{ background: "#fffbe6", border: "1px solid #ffe58f" }}
