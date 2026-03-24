@@ -1,7 +1,113 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
+/* ── Custom Steps — harus di atas @import tailwindcss ── */
+.custom-steps {
+  display: flex !important;
+  align-items: center !important;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.custom-step {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.custom-step-inner {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+  min-width: 0;
+}
+
+.custom-step-icon {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: all 0.25s;
+  border: 2px solid #e0e0e0 !important;
+  background: #fff !important;
+  color: #bfbfbf !important;
+}
+
+.custom-step-icon.active {
+  background: #f5a623 !important;
+  border-color: #f5a623 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.18) !important;
+}
+
+.custom-step-icon.done {
+  background: #fff7e6 !important;
+  border-color: #f5a623 !important;
+  color: #f5a623 !important;
+}
+
+.custom-step-label {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: #bfbfbf !important;
+  white-space: nowrap;
+  transition: all 0.25s;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-step-label.active {
+  font-weight: 800 !important;
+  color: #1a1a2e !important;
+}
+
+.custom-step-label.done {
+  font-weight: 500 !important;
+  color: #f5a623 !important;
+}
+
+.custom-step-line {
+  flex: 1;
+  flex-shrink: 1;
+  min-width: 8px;
+  height: 2px !important;
+  background: #e0e0e0 !important;
+  margin: 0 6px;
+  transition: background 0.25s;
+  display: block !important;
+}
+
+.custom-step-line.done {
+  background: #f5a623 !important;
+}
+
+@media (max-width: 520px) {
+  .custom-step-label {
+    display: none !important;
+  }
+
+  .custom-step-icon {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+  }
+
+  .custom-step-line {
+    margin: 0 4px !important;
+    min-width: 6px !important;
+  }
+}
+
+/* ── Tailwind (setelah custom steps) ── */
 @import "tailwindcss";
 
+/* ── Global base ── */
 *,
 *::before,
 *::after {
@@ -31,7 +137,7 @@ body {
   min-height: 100vh;
 }
 
-/* Ant Design overrides */
+/* ── Ant Design overrides ── */
 .ant-btn-primary {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
@@ -80,7 +186,7 @@ body {
   border-radius: 10px !important;
 }
 
-/* Custom scrollbar */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -94,7 +200,7 @@ body {
   border-radius: 3px;
 }
 
-/* Step card animation */
+/* ── Animations ── */
 .step-card-enter {
   animation: fadeSlideIn 0.3s ease;
 }
@@ -110,7 +216,7 @@ body {
   }
 }
 
-/* Upload zone */
+/* ── Upload zone ── */
 .upload-zone {
   border: 2px dashed #d9d9d9;
   border-radius: 16px;
@@ -127,7 +233,7 @@ body {
   background: var(--primary-light);
 }
 
-/* Person chips */
+/* ── Person chips ── */
 .person-chip {
   display: inline-flex;
   align-items: center;
@@ -145,7 +251,7 @@ body {
   transform: scale(1.04);
 }
 
-/* Assign buttons */
+/* ── Assign buttons ── */
 .assign-person-btn {
   display: inline-flex;
   align-items: center;
@@ -170,7 +276,7 @@ body {
   border-color: transparent;
 }
 
-/* Result card */
+/* ── Result card ── */
 .result-person-card {
   border-radius: 16px;
   padding: 20px;
@@ -192,27 +298,19 @@ body {
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
-  .ant-steps .ant-steps-item-title {
-    font-size: 11px !important;
-  }
-
   .ant-card-body {
     padding: 14px !important;
-  }
-
-  .ant-statistic-content-value {
-    font-size: 16px !important;
   }
 }
 
 @media (max-width: 480px) {
-  /* Steps: hide title on very small screens, show only icons */
-  .ant-steps-small .ant-steps-item-title {
-    display: none;
-  }
-
-  /* Upload zone tighter */
   .upload-zone {
     padding: 28px 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .upload-zone {
+    padding: 24px 12px;
   }
 }

@@ -8,20 +8,19 @@ import {
   Typography,
   Divider,
   Tag,
-  Modal,
   message,
   Row,
   Col,
 } from "antd";
 import {
-  CopyOutlined,
   ReloadOutlined,
   ShareAltOutlined,
-  CheckOutlined,
   UsergroupAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { useRouter } from "next/navigation";
 import { BillState } from "@/lib/types";
+import { saveShareData } from "@/lib/shareStore";
 
 const { Text } = Typography;
 
@@ -38,12 +37,7 @@ interface PersonResult {
 }
 
 export default function ResultStep({ bill, goStep, resetAll }: Props) {
-  const [copiedAll, setCopiedAll] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [shareModalPerson, setShareModalPerson] = useState<PersonResult | null>(
-    null,
-  );
-  const [copiedPersonId, setCopiedPersonId] = useState<string | null>(null);
+  const router = useRouter();
   const [msgApi, contextHolder] = message.useMessage();
 
   const fmtRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
@@ -70,62 +64,14 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
 
   const grandTotal = results.reduce((sum, r) => sum + r.total, 0);
 
-  const shareAllText = useMemo(() => {
-    const lines = ["🧾 *BAGIBARENG — SPLIT BILL*", "━".repeat(26)];
-    for (const r of results) {
-      lines.push(`\n${r.person.avatar} *${r.person.name}*`);
-      for (const it of r.items) {
-        const note = it.splitCount > 1 ? ` (÷${it.splitCount})` : "";
-        lines.push(`  • ${it.name}${note}: ${fmtRp(it.share)}`);
-      }
-      lines.push(`  ➡ *Total: ${fmtRp(r.total)}*`);
-    }
-    lines.push("\n" + "━".repeat(26));
-    lines.push(`💰 Grand Total: *${fmtRp(grandTotal)}*`);
-    lines.push("\nDibuat dengan BagiBareng 🧾");
-    return lines.join("\n");
-  }, [results, grandTotal]);
-
-  const buildPersonText = (r: PersonResult) => {
-    const lines = [
-      `🧾 *BAGIBARENG — Tagihan ${r.person.avatar} ${r.person.name}*`,
-      "━".repeat(26),
-    ];
-    for (const it of r.items) {
-      const note = it.splitCount > 1 ? ` (dibagi ${it.splitCount} orang)` : "";
-      lines.push(`• ${it.name}${note}: ${fmtRp(it.share)}`);
-    }
-    lines.push("━".repeat(26));
-    lines.push(`💰 *Total kamu: ${fmtRp(r.total)}*`);
-    lines.push("\nDibuat dengan BagiBareng 🧾");
-    return lines.join("\n");
+  const handleShareGroup = () => {
+    saveShareData(bill);
+    router.push("/share/group");
   };
 
-  const handleCopyAll = async () => {
-    try {
-      await navigator.clipboard.writeText(shareAllText);
-      setCopiedAll(true);
-      msgApi.success("Berhasil disalin! Tempel ke grup chat kamu 🎉");
-      setTimeout(() => setCopiedAll(false), 2500);
-    } catch {
-      msgApi.error("Gagal menyalin");
-    }
-  };
-
-  const handleCopyPerson = async (r: PersonResult) => {
-    try {
-      await navigator.clipboard.writeText(buildPersonText(r));
-      setCopiedPersonId(r.person.id);
-      msgApi.success(`Tagihan ${r.person.name} disalin!`);
-      setTimeout(() => setCopiedPersonId(null), 2500);
-    } catch {
-      msgApi.error("Gagal menyalin");
-    }
-  };
-
-  const openSharePerson = (r: PersonResult) => {
-    setShareModalPerson(r);
-    setShareModalOpen(true);
+  const handleSharePerson = (personId: string) => {
+    saveShareData(bill);
+    router.push(`/share/${personId}`);
   };
 
   return (
@@ -250,7 +196,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                     overflow: "hidden",
                   }}
                 >
-                  {/* Decorative circle */}
                   <div
                     style={{
                       position: "absolute",
@@ -263,8 +208,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                       opacity: 0.12,
                     }}
                   />
-
-                  {/* Person Header */}
                   <div
                     style={{
                       display: "flex",
@@ -281,8 +224,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                       {r.person.name}
                     </Text>
                   </div>
-
-                  {/* Items */}
                   <div style={{ flex: 1, marginBottom: 10 }}>
                     {r.items.length === 0 ? (
                       <Text type="secondary" style={{ fontSize: 12 }}>
@@ -324,10 +265,7 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                       ))
                     )}
                   </div>
-
                   <Divider style={{ margin: "10px 0" }} />
-
-                  {/* Total */}
                   <div
                     style={{
                       display: "flex",
@@ -364,44 +302,20 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
         >
           <Text
             type="secondary"
-            style={{ fontSize: 12, display: "block", marginBottom: 10 }}
+            style={{ fontSize: 13, display: "block", marginBottom: 12 }}
           >
-            Salin ringkasan lengkap untuk dikirim ke grup chat (WhatsApp, LINE,
-            Telegram, dll)
+            Lihat ringkasan lengkap semua orang dan salin untuk dikirim ke grup
+            chat.
           </Text>
-          <pre
-            style={{
-              background: "#f5f5f5",
-              padding: 14,
-              borderRadius: 10,
-              fontSize: 12,
-              fontFamily: "monospace",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              color: "#595959",
-              margin: 0,
-              lineHeight: 1.8,
-              maxHeight: 260,
-              overflowY: "auto",
-            }}
-          >
-            {shareAllText}
-          </pre>
           <Button
             type="primary"
             block
             size="large"
-            // icon={copiedAll ? <CheckOutlined /> : <ShareAltOutlined />}
-            onClick={handleCopyAll}
-            style={{
-              marginTop: 10,
-              borderRadius: 10,
-              height: 48,
-              background: copiedAll ? "#52c41a" : undefined,
-              borderColor: copiedAll ? "#52c41a" : undefined,
-            }}
+            icon={<ShareAltOutlined />}
+            onClick={handleShareGroup}
+            style={{ borderRadius: 10, height: 48 }}
           >
-            {copiedAll ? "✅ Tersalin!" : "📋 Copy & Share ke Grup"}
+            Lihat & Share Rincian Grup
           </Button>
         </Card>
 
@@ -416,9 +330,9 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
         >
           <Text
             type="secondary"
-            style={{ fontSize: 12, display: "block", marginBottom: 12 }}
+            style={{ fontSize: 13, display: "block", marginBottom: 12 }}
           >
-            Kirim tagihan masing-masing ke personal chat
+            Kirim tagihan masing-masing ke personal chat.
           </Text>
           <div
             style={{
@@ -430,10 +344,10 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
             {results.map((r) => (
               <Button
                 key={r.person.id}
-                onClick={() => openSharePerson(r)}
+                onClick={() => handleSharePerson(r.person.id)}
                 style={{
                   height: "auto",
-                  padding: "10px 12px",
+                  padding: "12px",
                   borderRadius: 10,
                   borderColor: r.person.color + "55",
                   background: r.person.color + "0f",
@@ -443,7 +357,7 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
                   gap: 4,
                 }}
               >
-                <span style={{ fontSize: 22 }}>{r.person.avatar}</span>
+                <span style={{ fontSize: 24 }}>{r.person.avatar}</span>
                 <Text strong style={{ fontSize: 12, color: r.person.color }}>
                   {r.person.name}
                 </Text>
@@ -475,69 +389,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
           </Button>
         </div>
       </Space>
-
-      {/* ── Share Person Modal ── */}
-      <Modal
-        title={
-          shareModalPerson
-            ? `${shareModalPerson.person.avatar} Tagihan ${shareModalPerson.person.name}`
-            : "Share Tagihan"
-        }
-        open={shareModalOpen}
-        onCancel={() => setShareModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setShareModalOpen(false)}>
-            Tutup
-          </Button>,
-          <Button
-            key="copy"
-            type="primary"
-            // icon={
-            //   shareModalPerson &&
-            //   copiedPersonId === shareModalPerson.person.id ? (
-            //     <CheckOutlined />
-            //   ) : (
-            //     <CopyOutlined />
-            //   )
-            // }
-            onClick={() =>
-              shareModalPerson && handleCopyPerson(shareModalPerson)
-            }
-          >
-            {shareModalPerson && copiedPersonId === shareModalPerson.person.id
-              ? "✅ Tersalin!"
-              : "Copy & Kirim"}
-          </Button>,
-        ]}
-        width={400}
-      >
-        {shareModalPerson && (
-          <>
-            <Text
-              type="secondary"
-              style={{ fontSize: 12, display: "block", marginBottom: 10 }}
-            >
-              Salin teks di bawah dan kirim ke personal chat{" "}
-              {shareModalPerson.person.name}:
-            </Text>
-            <pre
-              style={{
-                background: "#f5f5f5",
-                padding: 14,
-                borderRadius: 10,
-                fontSize: 12,
-                fontFamily: "monospace",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                color: "#595959",
-                lineHeight: 1.8,
-              }}
-            >
-              {buildPersonText(shareModalPerson)}
-            </pre>
-          </>
-        )}
-      </Modal>
     </>
   );
 }
