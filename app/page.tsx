@@ -60,7 +60,12 @@ export default function HomePage() {
   return (
     <Layout style={{ minHeight: "100vh", background: "#f7f8fa" }}>
       <Content
-        style={{ maxWidth: 760, margin: "0 auto", padding: "24px 16px" }}
+        style={{
+          maxWidth: 760,
+          margin: "0 auto",
+          padding: "24px 16px",
+          minWidth: 700,
+        }}
       >
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

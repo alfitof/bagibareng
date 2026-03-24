@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Card, Button, Space, Typography, Spin, Alert } from "antd";
+import { Card, Button, Space, Typography, Alert, Progress } from "antd";
 import { ScanOutlined, EditOutlined, InboxOutlined } from "@ant-design/icons";
 import { BillState } from "@/lib/types";
-import { MOCK_OCR_TEXT, parseReceiptText } from "@/lib/mockParser";
+import { runOcr, OcrProgress } from "@/lib/ocrParser";
+import { parseReceiptText } from "@/lib/mockParser"; // fallback manual
 
 const { Title, Text } = Typography;
 
@@ -17,11 +18,17 @@ interface Props {
 export default function UploadStep({ bill, updateBill, goStep }: Props) {
   const [dragging, setDragging] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState<OcrProgress>({
+    status: "",
+    progress: 0,
+  });
+  const [ocrError, setOcrError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
     const url = URL.createObjectURL(file);
     updateBill({ imageFile: file, imagePreviewUrl: url });
+    setOcrError(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -32,12 +39,26 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
   };
 
   const handleScan = async () => {
+    if (!bill.imageFile) return;
     setScanning(true);
-    await new Promise((r) => setTimeout(r, 1800));
-    const items = parseReceiptText(MOCK_OCR_TEXT);
-    updateBill({ ocrRawText: MOCK_OCR_TEXT, items });
-    setScanning(false);
-    goStep(1);
+    setOcrError(null);
+    setOcrProgress({ status: "Memulai OCR...", progress: 0 });
+
+    try {
+      const { rawText, items } = await runOcr(bill.imageFile, (p) => {
+        setOcrProgress(p);
+      });
+      updateBill({ ocrRawText: rawText, items });
+      goStep(1);
+    } catch (err) {
+      setOcrError(
+        err instanceof Error
+          ? err.message
+          : "Gagal membaca struk. Coba foto ulang.",
+      );
+    } finally {
+      setScanning(false);
+    }
   };
 
   const handleManual = () => {
@@ -114,6 +135,7 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
               size="small"
               onClick={() => {
                 updateBill({ imageFile: null, imagePreviewUrl: null });
+                setOcrError(null);
                 if (fileRef.current) fileRef.current.value = "";
               }}
             >
@@ -133,22 +155,40 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         )}
       </Card>
 
-      <Alert
-        title="Mode Demo"
-        description="Saat ini OCR menggunakan data mock untuk demo UI. Integrasi Tesseract.js akan ditambahkan di tahap berikutnya."
-        type="info"
-        showIcon
-        style={{ borderRadius: 12 }}
-      />
-
-      {scanning ? (
-        <Card style={{ textAlign: "center", padding: "20px 0" }}>
-          <Spin size="large" />
-          <Text type="secondary" style={{ marginTop: 12, display: "block" }}>
-            Sedang membaca struk...
+      {/* OCR Progress */}
+      {scanning && (
+        <Card>
+          <Text strong style={{ display: "block", marginBottom: 8 }}>
+            🔍 {ocrProgress.status}
+          </Text>
+          <Progress
+            percent={ocrProgress.progress}
+            strokeColor="#f5a623"
+            railColor="#f0f0f0"
+            showInfo={ocrProgress.progress > 0}
+          />
+          <Text
+            type="secondary"
+            style={{ fontSize: 12, marginTop: 6, display: "block" }}
+          >
+            Harap tunggu, jangan tutup halaman ini...
           </Text>
         </Card>
-      ) : (
+      )}
+
+      {/* Error */}
+      {ocrError && (
+        <Alert
+          title="OCR Gagal"
+          description={ocrError}
+          type="error"
+          showIcon
+          style={{ borderRadius: 12 }}
+        />
+      )}
+
+      {/* Actions */}
+      {!scanning && (
         <Space orientation="vertical" size={10} style={{ width: "100%" }}>
           <Button
             type="primary"
@@ -159,7 +199,7 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
             disabled={!bill.imagePreviewUrl}
             style={{ height: 48, fontSize: 15, borderRadius: 12 }}
           >
-            🔍 Scan dengan OCR
+            🔍 Scan Struk dengan OCR
           </Button>
           <Button
             size="large"
@@ -173,15 +213,17 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         </Space>
       )}
 
+      {/* Tips */}
       <Card
         size="small"
         style={{ background: "#fffbe6", border: "1px solid #ffe58f" }}
       >
         <Text style={{ fontSize: 12, color: "#875800" }}>
-          <strong>💡 Tips foto struk yang bagus:</strong>
-          <br />• Pastikan pencahayaan cukup terang
-          <br />• Foto lurus dari atas, jangan miring
-          <br />• Semua teks harus terbaca jelas
+          <strong>💡 Tips agar OCR akurat:</strong>
+          <br />• Foto dari atas, tegak lurus — jangan miring
+          <br />• Pastikan semua teks terbaca, tidak blur
+          <br />• Cahaya cukup, hindari bayangan di atas struk
+          <br />• Setelah scan, cek & edit hasilnya di langkah berikutnya
         </Text>
       </Card>
     </Space>
