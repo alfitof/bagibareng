@@ -10,6 +10,9 @@ import ResultStep from "../components/ResultStep";
 import CustomSteps from "../components/CustomSteps";
 import { BillState } from "@/lib/types";
 import { loadShareData, loadSavedStep } from "@/lib/shareStore";
+import { Grid } from "antd";
+
+const { useBreakpoint } = Grid;
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -27,8 +30,10 @@ const INITIAL_STATE: BillState = {
 export default function HomePage() {
   const [bill, setBill] = useState<BillState>(INITIAL_STATE);
   const [hydrated, setHydrated] = useState(false);
+  const screens = useBreakpoint();
 
-  // Restore state dari sessionStorage saat kembali dari share page
+  const isDesktop = screens.md;
+
   useEffect(() => {
     const payload = loadShareData();
     const savedStep = loadSavedStep();
@@ -64,7 +69,7 @@ export default function HomePage() {
           maxWidth: 760,
           margin: "0 auto",
           padding: "24px 16px",
-          minWidth: 700,
+          minWidth: isDesktop ? 700 : undefined,
         }}
       >
         <div style={{ marginBottom: 24 }}>

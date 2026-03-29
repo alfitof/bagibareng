@@ -11,7 +11,9 @@ import { useRouter, useParams } from "next/navigation";
 import { loadShareData, SharePayload } from "@/lib/shareStore";
 import domtoimage from "dom-to-image";
 import SharePoster from "@/components/SharePoster";
+import { Grid } from "antd";
 
+const { useBreakpoint } = Grid;
 const { Content } = Layout;
 const { Text } = Typography;
 
@@ -26,7 +28,9 @@ export default function SharePersonPage() {
   const params = useParams();
   const personId = params?.personId as string;
   const posterRef = useRef<HTMLDivElement>(null);
+  const screens = useBreakpoint();
 
+  const isDesktop = screens.md;
   const [result, setResult] = useState<PersonResult | null>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -96,7 +100,7 @@ export default function SharePersonPage() {
           maxWidth: 420,
           margin: "0 auto",
           padding: "24px 16px",
-          minWidth: 400,
+          minWidth: isDesktop ? 400 : undefined,
         }}
       >
         {/* Top nav */}
