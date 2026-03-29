@@ -1,6 +1,3 @@
-// lib/mockParser.ts
-export { parseReceiptText } from "./ocrParser";
-
 export const MOCK_OCR_TEXT = `
 WARUNG MAKAN SEDERHANA
 Jl. Sudirman No. 12, Jakarta

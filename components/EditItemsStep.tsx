@@ -24,7 +24,6 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import { BillItem, BillState } from "@/lib/types";
-import { parseReceiptText } from "@/lib/mockParser";
 import { v4 as uuidv4 } from "uuid";
 
 const { Title, Text } = Typography;
@@ -70,8 +69,7 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
     updateBill({ items: bill.items.filter((i) => i.id !== id), assignments });
   };
 
-  const reparse = () =>
-    updateBill({ items: parseReceiptText(bill.ocrRawText) });
+  const reparse = () => {};
 
   return (
     <Space orientation="vertical" size={16} style={{ width: "100%" }}>
@@ -108,8 +106,14 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                   marginBottom: 8,
                 }}
               />
-              <Button size="small" icon={<ReloadOutlined />} onClick={reparse}>
-                Parse Ulang
+              <Button
+                size="small"
+                icon={<ReloadOutlined />}
+                onClick={reparse}
+                disabled
+                title="Parse ulang tidak tersedia — edit item manual di bawah"
+              >
+                Parse Ulang (via AI)
               </Button>
             </>
           )}
