@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
-/* ── Custom Steps — harus di atas @import tailwindcss ── */
 .custom-steps {
   display: flex !important;
   align-items: center !important;
@@ -104,7 +103,6 @@
   }
 }
 
-/* ── Tailwind (setelah custom steps) ── */
 @import "tailwindcss";
 
 /* ── Global base ── */

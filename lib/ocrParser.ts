@@ -5,7 +5,6 @@ export interface OcrProgress {
   progress: number;
 }
 
-// Preprocess gambar untuk ketajaman OCR
 async function preprocessImage(file: File): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();

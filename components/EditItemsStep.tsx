@@ -14,6 +14,7 @@ import {
   Empty,
   Divider,
   Badge,
+  Switch,
 } from "antd";
 import {
   PlusOutlined,
@@ -22,12 +23,26 @@ import {
   ArrowRightOutlined,
   ReloadOutlined,
   EditOutlined,
+  PercentageOutlined,
 } from "@ant-design/icons";
 import { BillItem, BillState } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+
+interface AdditionalFee {
+  id: string;
+  label: string;
+  percent: number;
+  enabled: boolean;
+}
+
+const DEFAULT_FEES: AdditionalFee[] = [
+  { id: "tax", label: "PPN / Tax", percent: 11, enabled: false },
+  { id: "service", label: "Service Charge", percent: 5, enabled: false },
+  { id: "pb1", label: "PB1", percent: 10, enabled: false },
+];
 
 interface Props {
   bill: BillState;
@@ -41,16 +56,83 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
   const [newQty, setNewQty] = useState<number>(1);
   const [showRaw, setShowRaw] = useState(false);
 
-  const fmtRp = (n: number) => "Rp " + Number(n).toLocaleString("id-ID");
+  // Additional fees state
+  const [fees, setFees] = useState<AdditionalFee[]>(DEFAULT_FEES);
+  const [customFeeLabel, setCustomFeeLabel] = useState("");
+  const [customFeePercent, setCustomFeePercent] = useState<number | null>(null);
 
-  const totalBill = bill.items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const fmtRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
+
+  const subtotal = bill.items.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+  // Hitung total fee
+  const activeFees = fees.filter((f) => f.enabled);
+  const totalFeePercent = activeFees.reduce((sum, f) => sum + f.percent, 0);
+  const totalFeeAmount = Math.round((subtotal * totalFeePercent) / 100);
+  const grandTotal = subtotal + totalFeeAmount;
+
+  // Fee amount per fee item
+  const getFeeAmount = (percent: number) =>
+    Math.round((subtotal * percent) / 100);
+
+  const toggleFee = (id: string) => {
+    setFees((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)),
+    );
+  };
+
+  const updateFeePercent = (id: string, percent: number) => {
+    setFees((prev) => prev.map((f) => (f.id === id ? { ...f, percent } : f)));
+  };
+
+  const updateFeeLabel = (id: string, label: string) => {
+    setFees((prev) => prev.map((f) => (f.id === id ? { ...f, label } : f)));
+  };
+
+  const deleteFee = (id: string) => {
+    setFees((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const addCustomFee = () => {
+    if (!customFeeLabel.trim() || !customFeePercent) return;
+    setFees((prev) => [
+      ...prev,
+      {
+        id: uuidv4(),
+        label: customFeeLabel.trim(),
+        percent: customFeePercent,
+        enabled: true,
+      },
+    ]);
+    setCustomFeeLabel("");
+    setCustomFeePercent(null);
+  };
+
+  // Simpan fee info ke bill saat lanjut
+  const handleNext = () => {
+    // Simpan fee yang aktif ke additionalFees di bill
+    // Kita inject fee sebagai item khusus dengan flag
+    const feeItems: BillItem[] = activeFees.map((f) => ({
+      id: `fee_${f.id}`,
+      name: `${f.label} (${f.percent}%)`,
+      price: getFeeAmount(f.percent),
+      qty: 1,
+      isFee: true,
+    }));
+
+    // Hapus fee lama jika ada, ganti dengan yang baru
+    const nonFeeItems = bill.items.filter((i) => !(i as any).isFee);
+    updateBill({ items: [...nonFeeItems, ...feeItems] });
+    goStep(2);
+  };
 
   const addItem = () => {
     if (!newName.trim() || !newPrice) return;
     updateBill({
       items: [
-        ...bill.items,
+        ...bill.items.filter((i) => !(i as any).isFee),
         { id: uuidv4(), name: newName.trim(), price: newPrice, qty: newQty },
+        ...bill.items.filter((i) => (i as any).isFee),
       ],
     });
     setNewName("");
@@ -71,6 +153,9 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
 
   const reparse = () => {};
 
+  // Non-fee items saja yang ditampilkan di tabel
+  const displayItems = bill.items.filter((i) => !(i as any).isFee);
+
   return (
     <Space orientation="vertical" size={16} style={{ width: "100%" }}>
       {/* Raw OCR */}
@@ -81,7 +166,7 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
             <Space>
               <EditOutlined />
               <span>Teks Hasil OCR</span>
-              <Tag color="blue">{bill.items.length} item terdeteksi</Tag>
+              <Tag color="blue">{displayItems.length} item terdeteksi</Tag>
             </Space>
           }
           extra={
@@ -126,7 +211,7 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
           <Space>
             <span>🛒 Daftar Item</span>
             <Badge
-              count={bill.items.length}
+              count={displayItems.length}
               style={{ backgroundColor: "#f5a623" }}
             />
           </Space>
@@ -137,157 +222,141 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
           </Text>
         }
       >
-        {bill.items.length === 0 ? (
+        {displayItems.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description="Belum ada item."
           />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {/* Header Row */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 64px 140px auto",
-                gap: 8,
-                padding: "0 8px",
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                NAMA ITEM
-              </Text>
-              <Text
-                type="secondary"
-                style={{ fontSize: 11, textAlign: "center" }}
-              >
-                QTY
-              </Text>
-              <Text
-                type="secondary"
-                style={{ fontSize: 11, textAlign: "right" }}
-              >
-                HARGA SATUAN
-              </Text>
-              <span />
-            </div>
-
-            {/* Item Rows */}
-            {bill.items.map((item) => (
+            {displayItems.map((item) => (
               <div
                 key={item.id}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 64px 140px auto",
+                  display: "flex",
+                  flexDirection: "column",
                   gap: 8,
-                  alignItems: "center",
-                  padding: "8px",
+                  padding: "10px 12px",
                   background: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
                 }}
               >
-                {/* Name — full width, wraps freely */}
-                <Input
-                  value={item.name}
-                  onChange={(e) =>
-                    updateItem(item.id, { name: e.target.value })
-                  }
-                  variant="borderless"
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 13,
-                    padding: "0 4px",
-                    width: "100%",
-                    whiteSpace: "normal",
-                    wordBreak: "break-word",
-                  }}
-                />
-                {/* Qty */}
-                <InputNumber
-                  value={item.qty}
-                  min={1}
-                  max={99}
-                  onChange={(v) => updateItem(item.id, { qty: v ?? 1 })}
-                  style={{ width: "100%" }}
-                  size="small"
-                />
-                {/* Price */}
-                <InputNumber
-                  value={item.price}
-                  min={0}
-                  step={500}
-                  formatter={(v) =>
-                    v
-                      ? `Rp ${String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`
-                      : ""
-                  }
-                  parser={(v) => Number(v!.replace(/[Rp\s.]/g, "")) as 0}
-                  onChange={(v) => updateItem(item.id, { price: v ?? 0 })}
-                  style={{ width: "100%" }}
-                  size="small"
-                />
-                {/* Delete */}
-                <Popconfirm
-                  title="Hapus item ini?"
-                  onConfirm={() => deleteItem(item.id)}
-                  okText="Hapus"
-                  cancelText="Batal"
-                  okButtonProps={{ danger: true }}
-                >
-                  <Tooltip title="Hapus">
-                    <Button
-                      danger
-                      ghost
+                {/* Baris 1: Nama + Hapus */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Input
+                    value={item.name}
+                    onChange={(e) =>
+                      updateItem(item.id, { name: e.target.value })
+                    }
+                    variant="borderless"
+                    style={{
+                      flex: 1,
+                      fontWeight: 600,
+                      fontSize: 13,
+                      padding: "0 4px",
+                    }}
+                  />
+                  <Popconfirm
+                    title="Hapus item ini?"
+                    onConfirm={() => deleteItem(item.id)}
+                    okText="Hapus"
+                    cancelText="Batal"
+                    okButtonProps={{ danger: true }}
+                  >
+                    <Tooltip title="Hapus">
+                      <Button
+                        danger
+                        ghost
+                        size="small"
+                        shape="circle"
+                        icon={<DeleteOutlined />}
+                      />
+                    </Tooltip>
+                  </Popconfirm>
+                </div>
+
+                {/* Baris 2: Qty + Harga */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Text
+                      type="secondary"
+                      style={{ fontSize: 11, flexShrink: 0 }}
+                    >
+                      Qty
+                    </Text>
+                    <InputNumber
+                      value={item.qty}
+                      min={1}
+                      max={99}
+                      onChange={(v) => updateItem(item.id, { qty: v ?? 1 })}
+                      style={{ width: 70 }}
                       size="small"
-                      shape="circle"
-                      icon={<DeleteOutlined />}
                     />
-                  </Tooltip>
-                </Popconfirm>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flex: 1,
+                    }}
+                  >
+                    <Text
+                      type="secondary"
+                      style={{ fontSize: 11, flexShrink: 0 }}
+                    >
+                      Harga
+                    </Text>
+                    <InputNumber
+                      value={item.price}
+                      min={0}
+                      step={500}
+                      formatter={(v) =>
+                        v
+                          ? `Rp ${String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`
+                          : ""
+                      }
+                      parser={(v) => Number(v!.replace(/[Rp\s.]/g, "")) as 0}
+                      onChange={(v) => updateItem(item.id, { price: v ?? 0 })}
+                      style={{ flex: 1 }}
+                      size="small"
+                    />
+                  </div>
+                </div>
               </div>
             ))}
-
-            {/* Subtotal per item hint */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: 4,
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Subtotal masing-masing dihitung otomatis saat assign
-              </Text>
-            </div>
           </div>
         )}
 
-        {/* Total */}
-        {bill.items.length > 0 && (
+        {/* Subtotal */}
+        {displayItems.length > 0 && (
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "#fff7e6",
-              border: "1px solid #ffd591",
-              borderRadius: 10,
-              padding: "12px 16px",
-              marginTop: 12,
+              padding: "10px 12px",
+              marginTop: 10,
+              background: "#fafafa",
+              borderRadius: 8,
+              border: "1px solid #f0f0f0",
             }}
           >
-            <Text strong style={{ fontSize: 14 }}>
-              💰 Total Struk
+            <Text type="secondary" style={{ fontSize: 13 }}>
+              Subtotal
             </Text>
-            <Text strong style={{ fontSize: 18, color: "#f5a623" }}>
-              {fmtRp(totalBill)}
+            <Text strong style={{ fontSize: 15 }}>
+              {fmtRp(subtotal)}
             </Text>
           </div>
         )}
 
-        <Divider style={{ margin: "16px 0 12px" }} />
+        <Divider style={{ margin: "14px 0 12px" }} />
 
-        {/* Add Item Manual — improved spacing */}
+        {/* Add Item Manual */}
         <div>
           <Text
             strong
@@ -342,6 +411,218 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         </div>
       </Card>
 
+      {/* ── Additional Fees ── */}
+      <Card
+        title={
+          <Space>
+            <PercentageOutlined style={{ color: "#f5a623" }} />
+            <span>Biaya Tambahan</span>
+          </Space>
+        }
+        extra={
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Dihitung dari subtotal
+          </Text>
+        }
+      >
+        <Space orientation="vertical" size={10} style={{ width: "100%" }}>
+          {fees.map((fee) => (
+            <div
+              key={fee.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 10,
+                background: fee.enabled ? "#fff7e6" : "#fafafa",
+                border: `1px solid ${fee.enabled ? "#ffd591" : "#f0f0f0"}`,
+                transition: "all 0.2s",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Toggle */}
+              <Switch
+                size="small"
+                checked={fee.enabled}
+                onChange={() => toggleFee(fee.id)}
+                style={{ flexShrink: 0 }}
+              />
+
+              {/* Label */}
+              <Input
+                value={fee.label}
+                onChange={(e) => updateFeeLabel(fee.id, e.target.value)}
+                variant="borderless"
+                style={{
+                  flex: 1,
+                  minWidth: 80,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  padding: "0 4px",
+                  color: fee.enabled ? "#1a1a2e" : "#bbb",
+                }}
+              />
+
+              {/* Percent input */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  flexShrink: 0,
+                }}
+              >
+                <InputNumber
+                  value={fee.percent}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  onChange={(v) => updateFeePercent(fee.id, v ?? 0)}
+                  style={{ width: 70 }}
+                  size="small"
+                  disabled={!fee.enabled}
+                />
+                <Text style={{ color: "#888", fontSize: 13 }}>%</Text>
+              </div>
+
+              {/* Amount preview */}
+              {fee.enabled && subtotal > 0 && (
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#f5a623",
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    minWidth: 80,
+                    textAlign: "right",
+                  }}
+                >
+                  +{fmtRp(getFeeAmount(fee.percent))}
+                </Text>
+              )}
+
+              {/* Delete — hanya untuk custom fee */}
+              {!["tax", "service", "pb1"].includes(fee.id) && (
+                <Tooltip title="Hapus">
+                  <Button
+                    danger
+                    ghost
+                    size="small"
+                    shape="circle"
+                    icon={<DeleteOutlined />}
+                    onClick={() => deleteFee(fee.id)}
+                  />
+                </Tooltip>
+              )}
+            </div>
+          ))}
+
+          {/* Add custom fee */}
+          <div
+            style={{
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px dashed #d9d9d9",
+              background: "#fafafa",
+            }}
+          >
+            <Text
+              type="secondary"
+              style={{ fontSize: 12, display: "block", marginBottom: 8 }}
+            >
+              + Tambah biaya lainnya
+            </Text>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Input
+                placeholder="Nama biaya (mis: Rounding)"
+                value={customFeeLabel}
+                onChange={(e) => setCustomFeeLabel(e.target.value)}
+                onPressEnter={addCustomFee}
+                style={{ flex: 1, minWidth: 120, borderRadius: 8 }}
+                size="small"
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <InputNumber
+                  placeholder="0"
+                  value={customFeePercent}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  onChange={(v) => setCustomFeePercent(v)}
+                  style={{ width: 70, borderRadius: 8 }}
+                  size="small"
+                />
+                <Text style={{ color: "#888", fontSize: 13 }}>%</Text>
+              </div>
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={addCustomFee}
+                disabled={!customFeeLabel.trim() || !customFeePercent}
+                style={{ borderRadius: 8 }}
+              >
+                Tambah
+              </Button>
+            </div>
+          </div>
+        </Space>
+
+        {/* Total breakdown */}
+        {displayItems.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <Divider style={{ margin: "0 0 12px" }} />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  Subtotal
+                </Text>
+                <Text style={{ fontSize: 13 }}>{fmtRp(subtotal)}</Text>
+              </div>
+              {activeFees.map((f) => (
+                <div
+                  key={f.id}
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    {f.label} ({f.percent}%)
+                  </Text>
+                  <Text style={{ fontSize: 13, color: "#f5a623" }}>
+                    +{fmtRp(getFeeAmount(f.percent))}
+                  </Text>
+                </div>
+              ))}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  background: "#fff7e6",
+                  border: "1px solid #ffd591",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  marginTop: 4,
+                }}
+              >
+                <Text strong style={{ fontSize: 14 }}>
+                  💰 Grand Total
+                </Text>
+                <Text strong style={{ fontSize: 18, color: "#f5a623" }}>
+                  {fmtRp(grandTotal)}
+                </Text>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
+
       {/* Navigation */}
       <div
         style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
@@ -357,8 +638,8 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         <Button
           type="primary"
           size="large"
-          disabled={bill.items.length === 0}
-          onClick={() => goStep(2)}
+          disabled={displayItems.length === 0}
+          onClick={handleNext}
           style={{ borderRadius: 10, flex: 1 }}
         >
           Lanjut ke Orang <ArrowRightOutlined />

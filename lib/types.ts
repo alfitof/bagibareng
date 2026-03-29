@@ -3,6 +3,7 @@ export interface BillItem {
   name: string;
   price: number;
   qty: number;
+  isFee?: boolean;
 }
 
 export interface Person {
