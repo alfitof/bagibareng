@@ -47,7 +47,6 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
 
   return (
     <Space orientation="vertical" size={16} style={{ width: "100%" }}>
-      {/* Progress */}
       <Card size="small">
         <div
           style={{
@@ -69,7 +68,6 @@ export default function AssignStep({ bill, updateBill, goStep }: Props) {
         />
       </Card>
 
-      {/* Assign Cards */}
       <Card
         title={
           <Space>

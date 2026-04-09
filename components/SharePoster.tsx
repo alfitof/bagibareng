@@ -40,7 +40,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
         width: "100%",
       }}
     >
-      {/* Top accent bar */}
       <div
         style={{
           height: 6,
@@ -51,7 +50,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
         }}
       />
 
-      {/* Header */}
       <div
         style={{
           background: "#fff7e6",
@@ -60,7 +58,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
           overflow: "hidden",
         }}
       >
-        {/* Deco circle */}
         <div
           style={{
             position: "absolute",
@@ -81,7 +78,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
             alignItems: "center",
           }}
         >
-          {/* Brand */}
           <div>
             <div
               style={{
@@ -100,7 +96,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
             </div>
           </div>
 
-          {/* Grand total */}
           <div style={{ textAlign: "right" }}>
             <div
               style={{
@@ -130,7 +125,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
         </div>
       </div>
 
-      {/* 2 col grid */}
       <div
         style={{
           padding: "14px 16px 16px",
@@ -157,7 +151,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
               flexDirection: "column",
             }}
           >
-            {/* Avatar + name */}
             <div
               style={{
                 display: "flex",
@@ -179,7 +172,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
               </span>
             </div>
 
-            {/* Items */}
             <div style={{ flex: 1, marginBottom: 8 }}>
               {r.items.map((it, i) => (
                 <div
@@ -223,7 +215,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
               ))}
             </div>
 
-            {/* Total */}
             <div
               style={{
                 borderTop: `1px solid ${r.person.color}33`,
@@ -249,7 +240,6 @@ function GroupPoster({ results, grandTotal, totalItems }: GroupPosterProps) {
         ))}
       </div>
 
-      {/* Footer */}
       <div
         style={{
           padding: "10px 20px",
@@ -282,7 +272,6 @@ function PersonPoster({ result }: PersonPosterProps) {
         width: "100%",
       }}
     >
-      {/* Top accent bar */}
       <div
         style={{
           height: 6,
@@ -290,7 +279,6 @@ function PersonPoster({ result }: PersonPosterProps) {
         }}
       />
 
-      {/* Header */}
       <div
         style={{
           background: color + "12",
@@ -312,7 +300,6 @@ function PersonPoster({ result }: PersonPosterProps) {
           }}
         />
 
-        {/* Name row */}
         <div
           style={{
             display: "flex",
@@ -359,7 +346,6 @@ function PersonPoster({ result }: PersonPosterProps) {
           </div>
         </div>
 
-        {/* Total card */}
         <div
           style={{
             background: "#fff",
@@ -412,7 +398,6 @@ function PersonPoster({ result }: PersonPosterProps) {
         </div>
       </div>
 
-      {/* Items */}
       <div style={{ padding: "18px 24px" }}>
         <div
           style={{
@@ -471,7 +456,6 @@ function PersonPoster({ result }: PersonPosterProps) {
           </div>
         ))}
 
-        {/* Total row */}
         <div
           style={{
             marginTop: 12,
@@ -502,7 +486,6 @@ function PersonPoster({ result }: PersonPosterProps) {
         </div>
       </div>
 
-      {/* Footer */}
       <div
         style={{
           padding: "12px 24px",

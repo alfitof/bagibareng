@@ -78,7 +78,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
     <>
       {contextHolder}
       <Space orientation="vertical" size={16} style={{ width: "100%" }}>
-        {/* ── Summary Stats ── */}
         <Card
           style={{
             background: "linear-gradient(135deg, #fff7e6 0%, #fffbe6 100%)",
@@ -178,7 +177,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
           </div>
         </Card>
 
-        {/* ── Per Person Cards ── */}
         <Card title="💰 Tagihan Per Orang">
           <Row gutter={[12, 12]} align="stretch">
             {results.map((r) => (
@@ -291,7 +289,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
           </Row>
         </Card>
 
-        {/* ── Share ke Grup ── */}
         <Card
           title={
             <Space>
@@ -319,7 +316,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
           </Button>
         </Card>
 
-        {/* ── Share Personal ── */}
         <Card
           title={
             <Space>
@@ -369,7 +365,6 @@ export default function ResultStep({ bill, goStep, resetAll }: Props) {
           </div>
         </Card>
 
-        {/* ── Actions ── */}
         <div style={{ display: "flex", gap: 12 }}>
           <Button
             size="large"

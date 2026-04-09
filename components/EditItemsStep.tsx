@@ -158,7 +158,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
 
   return (
     <Space orientation="vertical" size={16} style={{ width: "100%" }}>
-      {/* Raw OCR */}
       {bill.ocrRawText && (
         <Card
           size="small"
@@ -205,7 +204,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         </Card>
       )}
 
-      {/* Items List */}
       <Card
         title={
           <Space>
@@ -242,7 +240,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                   border: "1px solid #f0f0f0",
                 }}
               >
-                {/* Baris 1: Nama + Hapus */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Input
                     value={item.name}
@@ -276,7 +273,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                   </Popconfirm>
                 </div>
 
-                {/* Baris 2: Qty + Harga */}
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <div
                     style={{ display: "flex", alignItems: "center", gap: 6 }}
@@ -331,7 +327,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
           </div>
         )}
 
-        {/* Subtotal */}
         {displayItems.length > 0 && (
           <div
             style={{
@@ -356,7 +351,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
 
         <Divider style={{ margin: "14px 0 12px" }} />
 
-        {/* Add Item Manual */}
         <div>
           <Text
             strong
@@ -411,7 +405,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         </div>
       </Card>
 
-      {/* ── Additional Fees ── */}
       <Card
         title={
           <Space>
@@ -441,7 +434,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                 flexWrap: "wrap",
               }}
             >
-              {/* Toggle */}
               <Switch
                 size="small"
                 checked={fee.enabled}
@@ -449,7 +441,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                 style={{ flexShrink: 0 }}
               />
 
-              {/* Label */}
               <Input
                 value={fee.label}
                 onChange={(e) => updateFeeLabel(fee.id, e.target.value)}
@@ -464,7 +455,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                 }}
               />
 
-              {/* Percent input */}
               <div
                 style={{
                   display: "flex",
@@ -486,7 +476,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                 <Text style={{ color: "#888", fontSize: 13 }}>%</Text>
               </div>
 
-              {/* Amount preview */}
               {fee.enabled && subtotal > 0 && (
                 <Text
                   style={{
@@ -502,7 +491,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
                 </Text>
               )}
 
-              {/* Delete — hanya untuk custom fee */}
               {!["tax", "service", "pb1"].includes(fee.id) && (
                 <Tooltip title="Hapus">
                   <Button
@@ -518,7 +506,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
             </div>
           ))}
 
-          {/* Add custom fee */}
           <div
             style={{
               padding: "10px 12px",
@@ -569,7 +556,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
           </div>
         </Space>
 
-        {/* Total breakdown */}
         {displayItems.length > 0 && (
           <div style={{ marginTop: 14 }}>
             <Divider style={{ margin: "0 0 12px" }} />
@@ -623,7 +609,6 @@ export default function EditItemsStep({ bill, updateBill, goStep }: Props) {
         )}
       </Card>
 
-      {/* Navigation */}
       <div
         style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
       >

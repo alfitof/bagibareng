@@ -120,7 +120,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
           👥 Siapa yang ikut makan?
         </Title>
 
-        {/* Add Person Row */}
         <div
           style={{
             display: "flex",
@@ -129,7 +128,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
             alignItems: "stretch",
           }}
         >
-          {/* Avatar selector button */}
           <Tooltip title="Pilih avatar">
             <Button
               style={{
@@ -167,7 +165,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
           </Button>
         </div>
 
-        {/* Quick Add */}
         {availableQuick.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <Text
@@ -191,7 +188,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
           </div>
         )}
 
-        {/* People List */}
         {bill.people.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -216,7 +212,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
                     color: person.color,
                   }}
                 >
-                  {/* Click avatar to edit */}
                   <Tooltip title="Ganti avatar">
                     <span
                       style={{ cursor: "pointer", fontSize: 18 }}
@@ -239,7 +234,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
         )}
       </Card>
 
-      {/* Summary */}
       {bill.people.length > 0 && (
         <Card
           size="small"
@@ -253,7 +247,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
         </Card>
       )}
 
-      {/* Navigation */}
       <div style={{ display: "flex", gap: 12 }}>
         <Button
           size="large"
@@ -274,7 +267,6 @@ export default function PeopleStep({ bill, updateBill, goStep }: Props) {
         </Button>
       </div>
 
-      {/* Avatar Picker Modal */}
       <Modal
         title="Pilih Avatar"
         open={avatarPickerOpen}

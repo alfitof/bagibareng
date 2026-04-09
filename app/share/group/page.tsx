@@ -96,7 +96,6 @@ export default function ShareGroupPage() {
       <Content
         style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}
       >
-        {/* Top nav */}
         <div
           style={{
             display: "flex",
@@ -115,7 +114,6 @@ export default function ShareGroupPage() {
           <Text style={{ color: "#888", fontSize: 12 }}>Share Grup</Text>
         </div>
 
-        {/* Poster — ref di sini untuk capture */}
         <div ref={posterRef}>
           <SharePoster
             type="group"
@@ -125,7 +123,6 @@ export default function ShareGroupPage() {
           />
         </div>
 
-        {/* Actions */}
         <div
           style={{
             marginTop: 20,

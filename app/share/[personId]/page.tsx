@@ -103,7 +103,6 @@ export default function SharePersonPage() {
           minWidth: isDesktop ? 400 : undefined,
         }}
       >
-        {/* Top nav */}
         <div
           style={{
             display: "flex",
@@ -122,12 +121,10 @@ export default function SharePersonPage() {
           <Text style={{ color: "#888", fontSize: 12 }}>Share Personal</Text>
         </div>
 
-        {/* Poster */}
         <div ref={posterRef}>
           <SharePoster type="person" result={result} />
         </div>
 
-        {/* Actions */}
         <div
           style={{
             marginTop: 20,

@@ -97,7 +97,6 @@ export default function CustomSteps({ current }: Props) {
               minWidth: 0,
             }}
           >
-            {/* Icon + Label */}
             <div
               style={{
                 display: "flex",
@@ -111,7 +110,6 @@ export default function CustomSteps({ current }: Props) {
               <span style={labelStyle}>{step.label}</span>
             </div>
 
-            {/* Connector line — skip after last */}
             {idx < STEPS.length - 1 && <div style={lineStyle} />}
           </div>
         );

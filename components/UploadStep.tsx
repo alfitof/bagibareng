@@ -118,7 +118,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
           📷 Upload Foto Struk
         </Title>
 
-        {/* Upload Zone */}
         {!bill.imagePreviewUrl ? (
           <div
             className={`upload-zone ${dragging ? "dragging" : ""}`}
@@ -164,7 +163,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
               alignItems: "center",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={bill.imagePreviewUrl}
               alt="Preview struk"
@@ -203,13 +201,9 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         )}
       </Card>
 
-      {/* Progress Card */}
       {isScanning && (
         <Card>
-          {/* Phase steps indicator */}
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-            {/* Step 1 - OCR */}
-            {/* Step 1 - OCR */}
             <div
               style={{
                 flex: 1,
@@ -240,7 +234,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
               </Text>
             </div>
 
-            {/* Arrow */}
             <div
               style={{
                 display: "flex",
@@ -252,7 +245,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
               →
             </div>
 
-            {/* Step 2 - AI */}
             <div
               style={{
                 flex: 1,
@@ -280,7 +272,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
             </div>
           </div>
 
-          {/* Status text */}
           <Text
             strong
             style={{ display: "block", marginBottom: 8, fontSize: 13 }}
@@ -288,7 +279,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
             {phaseIcon[phase]} {phaseLabel[phase]}
           </Text>
 
-          {/* Progress bar — hanya tampil saat OCR */}
           {phase === "ocr" && (
             <Progress
               percent={progressPct}
@@ -298,7 +288,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
             />
           )}
 
-          {/* AI loading indicator */}
           {phase === "ai" && (
             <Progress
               percent={100}
@@ -317,7 +306,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         </Card>
       )}
 
-      {/* Error */}
       {ocrError && (
         <Alert
           title="Scan Gagal"
@@ -328,7 +316,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         />
       )}
 
-      {/* Actions */}
       {!isScanning && (
         <Space orientation="vertical" size={10} style={{ width: "100%" }}>
           <Button
@@ -354,7 +341,6 @@ export default function UploadStep({ bill, updateBill, goStep }: Props) {
         </Space>
       )}
 
-      {/* Tips */}
       <Card
         size="small"
         style={{ background: "#fffbe6", border: "1px solid #ffe58f" }}
